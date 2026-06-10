@@ -569,12 +569,13 @@
             var ren=new THREE.WebGLRenderer({antialias:true,alpha:true});
             ren.setSize(W,H); ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
             if(THREE.sRGBEncoding!==undefined){ ren.outputEncoding=THREE.sRGBEncoding; }
+            if(THREE.ACESFilmicToneMapping!==undefined){ ren.toneMapping=THREE.ACESFilmicToneMapping; ren.toneMappingExposure=1.0; }
             var scene=new THREE.Scene();
             var cam=new THREE.PerspectiveCamera(34,W/H,0.05,80);
-            scene.add(new THREE.HemisphereLight(0xfff4dc,0x6b8f5a,1.05));
-            var key=new THREE.DirectionalLight(0xffe9c0,0.95); key.position.set(2.2,3.5,3); scene.add(key);
-            var rim=new THREE.DirectionalLight(0xbfd9ff,0.5); rim.position.set(-2.5,2,-2.5); scene.add(rim);
-            var fill=new THREE.DirectionalLight(0xfff2dd,0.55); fill.position.set(0,1.2,4); scene.add(fill);
+            scene.add(new THREE.HemisphereLight(0xfff4dc,0x6b8f5a,0.85));
+            var key=new THREE.DirectionalLight(0xffe9c0,0.7); key.position.set(2.2,3.5,3); scene.add(key);
+            var rim=new THREE.DirectionalLight(0xbfd9ff,0.35); rim.position.set(-2.5,2,-2.5); scene.add(rim);
+            var fill=new THREE.DirectionalLight(0xfff2dd,0.4); fill.position.set(0,1.2,4); scene.add(fill);
 
             var model=g.scene, root=new THREE.Group(); root.add(model); scene.add(root);
             var mixer=null,action=null,baseSpeed=0.5;
@@ -596,7 +597,7 @@
             model.position.x-=ctr.x; model.position.z-=ctr.z; model.position.y-=box.min.y;
             box=measure(); size=box.getSize(new THREE.Vector3());
             var h=Math.max(size.y,0.8), front=size.z/2+0.12;
-            cam.position.set(0,h*0.55,h*2.3); cam.lookAt(0,h*0.55,0);
+            cam.position.set(0,h*0.6,h*2.2); cam.lookAt(0,h*0.6,0);
 
             /* Sprites de estado */
             function canvasSprite(draw,sz,additive){ var c=document.createElement('canvas'); c.width=c.height=128;
@@ -607,20 +608,21 @@
             function emoji(ch){ return function(gx){ gx.font='100px serif'; gx.textAlign='center'; gx.textBaseline='middle'; gx.fillText(ch,64,72); }; }
             var aura=canvasSprite(function(gx){ var gr=gx.createRadialGradient(64,64,6,64,64,62);
               gr.addColorStop(0,'rgba(255,244,190,.95)'); gr.addColorStop(.55,'rgba(255,214,110,.45)'); gr.addColorStop(1,'rgba(255,214,110,0)');
-              gx.fillStyle=gr; gx.fillRect(0,0,128,128); }, h*1.9, true);
-            aura.position.set(0,h*0.52,-0.55); scene.add(aura);
+              gx.fillStyle=gr; gx.fillRect(0,0,128,128); }, h*1.45, true);
+            aura.position.set(0,h*0.58,-1.0); aura.material.opacity=0.8; scene.add(aura);
             var heartOK=canvasSprite(emoji('💗'),h*0.18); heartOK.position.set(h*0.16,h*0.34,front); root.add(heartOK);
             var heartBad=canvasSprite(emoji('🤍'),h*0.16); heartBad.material.opacity=0.55; heartBad.position.copy(heartOK.position); root.add(heartBad);
             var thought=canvasSprite(emoji('💭'),h*0.34); thought.position.set(h*0.22,h*1.16,0); root.add(thought);
             var bub=canvasSprite(function(gx){ gx.fillStyle='rgba(170,215,255,.95)';
               gx.beginPath(); gx.arc(46,86,17,0,7); gx.fill(); gx.beginPath(); gx.arc(82,52,12,0,7); gx.fill();
               gx.beginPath(); gx.arc(64,22,8,0,7); gx.fill(); }, h*0.34);
-            bub.position.set(h*0.42,h*0.92,front*0.5); root.add(bub);
+            bub.position.set(h*0.30,h*0.74,front*0.85); root.add(bub);
 
             /* Tinte emotivo sobre los materiales */
             var mats=[]; model.traverse(function(o){ if(o.isMesh&&o.material){
               if(o.material.metalness!==undefined) o.material.metalness=0.0;       /* sin metal: evita manchas negras */
               if(o.material.roughness!==undefined) o.material.roughness=Math.max(o.material.roughness,0.85); /* mate, look peluche */
+              o.material.transparent=false; o.material.opacity=1; o.material.depthWrite=true; o.material.alphaTest=0; /* opaco: el aura no atraviesa */
               o.material.needsUpdate=true;
               if(o.material.emissive) mats.push(o.material); } });
             function tint(hex,inten){ for(var i=0;i<mats.length;i++){ mats[i].emissive.setHex(hex); mats[i].emissiveIntensity=inten; } }
