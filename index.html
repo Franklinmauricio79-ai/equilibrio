@@ -574,6 +574,7 @@
             scene.add(new THREE.HemisphereLight(0xfff4dc,0x6b8f5a,1.05));
             var key=new THREE.DirectionalLight(0xffe9c0,0.95); key.position.set(2.2,3.5,3); scene.add(key);
             var rim=new THREE.DirectionalLight(0xbfd9ff,0.5); rim.position.set(-2.5,2,-2.5); scene.add(rim);
+            var fill=new THREE.DirectionalLight(0xfff2dd,0.55); fill.position.set(0,1.2,4); scene.add(fill);
 
             var model=g.scene, root=new THREE.Group(); root.add(model); scene.add(root);
             var mixer=null,action=null,baseSpeed=0.5;
@@ -595,7 +596,7 @@
             model.position.x-=ctr.x; model.position.z-=ctr.z; model.position.y-=box.min.y;
             box=measure(); size=box.getSize(new THREE.Vector3());
             var h=Math.max(size.y,0.8), front=size.z/2+0.12;
-            cam.position.set(0,h*0.62,h*2.35); cam.lookAt(0,h*0.5,0);
+            cam.position.set(0,h*0.55,h*2.3); cam.lookAt(0,h*0.55,0);
 
             /* Sprites de estado */
             function canvasSprite(draw,sz,additive){ var c=document.createElement('canvas'); c.width=c.height=128;
@@ -608,16 +609,20 @@
               gr.addColorStop(0,'rgba(255,244,190,.95)'); gr.addColorStop(.55,'rgba(255,214,110,.45)'); gr.addColorStop(1,'rgba(255,214,110,0)');
               gx.fillStyle=gr; gx.fillRect(0,0,128,128); }, h*1.9, true);
             aura.position.set(0,h*0.52,-0.55); scene.add(aura);
-            var heartOK=canvasSprite(emoji('💗'),h*0.26); heartOK.position.set(0,h*0.56,front); root.add(heartOK);
-            var heartBad=canvasSprite(emoji('🤍'),h*0.24); heartBad.material.opacity=0.55; heartBad.position.copy(heartOK.position); root.add(heartBad);
+            var heartOK=canvasSprite(emoji('💗'),h*0.18); heartOK.position.set(h*0.16,h*0.34,front); root.add(heartOK);
+            var heartBad=canvasSprite(emoji('🤍'),h*0.16); heartBad.material.opacity=0.55; heartBad.position.copy(heartOK.position); root.add(heartBad);
             var thought=canvasSprite(emoji('💭'),h*0.34); thought.position.set(h*0.22,h*1.16,0); root.add(thought);
             var bub=canvasSprite(function(gx){ gx.fillStyle='rgba(170,215,255,.95)';
               gx.beginPath(); gx.arc(46,86,17,0,7); gx.fill(); gx.beginPath(); gx.arc(82,52,12,0,7); gx.fill();
               gx.beginPath(); gx.arc(64,22,8,0,7); gx.fill(); }, h*0.34);
-            bub.position.set(h*0.30,h*0.80,front*0.6); root.add(bub);
+            bub.position.set(h*0.42,h*0.92,front*0.5); root.add(bub);
 
             /* Tinte emotivo sobre los materiales */
-            var mats=[]; model.traverse(function(o){ if(o.isMesh&&o.material&&o.material.emissive) mats.push(o.material); });
+            var mats=[]; model.traverse(function(o){ if(o.isMesh&&o.material){
+              if(o.material.metalness!==undefined) o.material.metalness=0.0;       /* sin metal: evita manchas negras */
+              if(o.material.roughness!==undefined) o.material.roughness=Math.max(o.material.roughness,0.85); /* mate, look peluche */
+              o.material.needsUpdate=true;
+              if(o.material.emissive) mats.push(o.material); } });
             function tint(hex,inten){ for(var i=0;i<mats.length;i++){ mats[i].emissive.setHex(hex); mats[i].emissiveIntensity=inten; } }
 
             var sBase=s;
@@ -627,12 +632,12 @@
               heartOK.visible=!!st.familia; heartBad.visible=!st.familia;
               thought.visible=!st.lectura;
               bub.visible=!st.respiracion;
-              if(!st.respiracion) tint(0x4a2a86,0.45);          /* morado: le falta el aire */
-              else if(!st.meditacion) tint(0x6e1414,0.35);      /* rojizo: enojado sin meditar */
+              if(!st.respiracion) tint(0x4a2a86,0.22);          /* morado: le falta el aire */
+              else if(!st.meditacion) tint(0x6e1414,0.18);      /* rojizo: enojado sin meditar */
               else tint(0x000000,0);
               baseSpeed = st.dormir ? (st.ejercicio?0.55:0.45) : 0.3;  /* cansado camina lento */
               if(action) action.timeScale=baseSpeed;
-              root.rotation.x = st.dormir ? 0 : 0.09;           /* ojeras: se encorva un poquito */
+              root.rotation.x = st.dormir ? 0 : 0.05;           /* ojeras: se encorva un poquito */
               var fx = st.ejercicio ? 0.96 : 1.14;              /* gordito si no hay ejercicio */
               model.scale.set(sBase*fx, sBase, sBase*fx);
             }
