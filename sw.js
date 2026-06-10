@@ -1,5 +1,5 @@
 /* Equilibrio · Service Worker */
-var CACHE = 'equilibrio-v3';
+var CACHE = 'equilibrio-v4';
 var ASSETS = ['./', './index.html', './manifest.json', './GLTFLoader.js', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
