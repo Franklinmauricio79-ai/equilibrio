@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Equilibrio · Bienestar integral</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5FA382">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Equilibrio">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --bg:#F4EEE2; --surface:#FCFAF4; --surface2:#F7F2E7;
+    --ink:#2C2A24; --muted:#8C8576; --line:#E6DECE;
+    --mente:#6C7BD1; --cuerpo:#D9794E; --emo:#E0A92E; --familia:#C4577A; --salud:#5FA382;
+    --shadow:0 1px 2px rgba(44,42,36,.04),0 8px 24px rgba(44,42,36,.06);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(900px 500px at 100% -5%, rgba(108,123,209,.10), transparent 60%),
+      radial-gradient(800px 500px at -10% 110%, rgba(95,163,130,.12), transparent 60%),
+      var(--bg);
+    min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:18px 16px 110px}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 18px}
+  .brand{font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:-.01em}
+  .brand span{color:var(--salud)}
+  .today{font-size:13px;color:var(--muted);font-weight:500;text-transform:capitalize}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:19px;margin:0 0 2px}
+  .card .sub{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.4}
+  .sec-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:4px 0 12px}
+  .dot{width:9px;height:9px;border-radius:50%}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .lbl{display:flex;align-items:center;gap:11px;font-size:15px;font-weight:500}
+  .row .lbl .ico{font-size:19px;width:24px;text-align:center}
+  .row .lbl small{display:block;font-size:11px;color:var(--muted);font-weight:500}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);font-size:19px;color:var(--ink);font-weight:500;cursor:pointer;line-height:1;transition:.15s}
+  .stepper button:active{transform:scale(.92);background:var(--bg)}
+  .stepper .val{min-width:62px;text-align:center;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+  .stepper .val small{color:var(--muted);font-weight:500;font-size:11px}
+
+  input[type=text],input[type=number],input[type=time],select,textarea{
+    font-family:inherit;font-size:15px;color:var(--ink);background:var(--surface2);
+    border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none;transition:.15s
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--salud);background:var(--surface)}
+  textarea{resize:vertical;min-height:60px}
+  label.fld{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 6px 2px}
+
+  .moods{display:flex;justify-content:space-between;gap:6px}
+  .mood{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:14px;border:1.5px solid transparent;background:var(--surface2);cursor:pointer;transition:.15s}
+  .mood .e{font-size:26px}.mood .t{font-size:10.5px;color:var(--muted);font-weight:600}
+  .mood.sel{border-color:var(--emo);background:#fff;box-shadow:0 4px 14px rgba(224,169,46,.18)}
+  .mood:active{transform:scale(.95)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:13px;font-weight:500;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);cursor:pointer;transition:.15s;color:var(--ink)}
+  .chip.sel{background:var(--familia);border-color:var(--familia);color:#fff}
+  .chip:active{transform:scale(.95)}
+
+  .med{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .med:last-child{border-bottom:none}
+  .check{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-size:15px;color:#fff}
+  .check.on{background:var(--salud);border-color:var(--salud)}
+  .med .info{flex:1}.med .info .n{font-weight:600;font-size:15px}.med .info .h{font-size:12.5px;color:var(--muted)}
+  .med .del{color:var(--muted);background:none;border:none;font-size:18px;cursor:pointer;padding:4px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border-radius:14px;border:none;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--ink);color:#fff}.btn-primary:active{transform:scale(.98);background:#444}
+  .btn-ghost{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+  .btn-soft{background:#fff;border:1px solid var(--line);color:var(--ink);font-size:14px;padding:12px}
+  .btn-mente{background:var(--mente);color:#fff}
+  .saved{text-align:center;font-size:13px;color:var(--salud);font-weight:600;height:18px;margin-top:8px;opacity:0;transition:.3s}
+  .saved.show{opacity:1}
+
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .v{font-family:'Fraunces',serif;font-size:26px;font-weight:600;line-height:1}
+  .kpi .v small{font-size:13px;color:var(--muted);font-family:'Outfit';font-weight:500}
+  .kpi .k{font-size:12px;color:var(--muted);font-weight:600;margin-top:5px}
+
+  .streaks{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center}
+  .streak .e{font-size:22px}.streak .n{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin-top:2px}.streak .l{font-size:10px;color:var(--muted);font-weight:600}
+
+  .chart{width:100%;height:300px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .seg button{flex:1;min-width:fit-content;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .reflect{background:linear-gradient(135deg,#FBF8F1,#F3EAD8);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+  .reflect .q{font-family:'Fraunces',serif;font-style:italic;font-size:16px;line-height:1.5}
+
+  .week-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .wk{background:var(--surface2);border-radius:13px;padding:12px 14px}
+  .wk .v{font-family:'Fraunces',serif;font-size:20px;font-weight:600}
+  .wk .d{font-size:12px;font-weight:600;margin-left:6px}
+  .wk .k{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
+  .up{color:var(--salud)}.down{color:var(--cuerpo)}
+
+  .ai-card{background:linear-gradient(150deg,#2C2A24,#3a3730);color:#F4EEE2;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:14px}
+  .ai-card h2{font-family:'Fraunces',serif;font-size:20px;margin:0 0 4px;color:#fff}
+  .ai-card .sub{font-size:12px;color:#bdb6a6;margin-bottom:14px;line-height:1.45}
+  .ai-out{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:13px;padding:15px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;margin-top:14px}
+  .ai-disc{font-size:11px;color:#a59e8e;margin-top:12px;line-height:1.45}
+  .btn-ai{background:var(--salud);color:#fff}
+
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(252,250,244,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 2px calc(9px + env(safe-area-inset-bottom));z-index:50}
+  nav.tabs button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 3px;cursor:pointer;color:var(--muted);font-family:inherit;transition:.15s;flex:1}
+  nav.tabs button .ti{font-size:19px}.nav.tabs button .tl{font-size:10px}
+  nav.tabs button .tl{font-size:9.5px;font-weight:600}
+  nav.tabs button.on{color:var(--ink)}
+
+  .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px}
+  .addbar{display:flex;gap:8px;margin-top:8px}
+  .mini{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:0 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .mini:active{transform:scale(.96)}
+  .addbar input{flex:1}.addbar input.t{flex:1.6}.addbar input.h{max-width:120px}.addbar input.e{max-width:64px;text-align:center;font-size:20px}
+  .small-note{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.4}
+  .item-line{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .item-line:last-child{border-bottom:none}.item-line .e{font-size:20px}.item-line .n{flex:1;font-weight:500}.item-line .r{font-size:12px;color:var(--muted)}
+  .item-line .del{color:var(--muted);background:none;border:none;font-size:17px;cursor:pointer}
+  .collapse{margin-top:10px;border-top:1px dashed var(--line);padding-top:12px}
+
+  /* respiración */
+  #breath{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 800px at 50% 40%,#1e3a34,#10211d);display:none;flex-direction:column;align-items:center;justify-content:center;color:#eaf3ef}
+  #breath.show{display:flex}
+  .b-circle{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(120,200,170,.9),rgba(60,130,110,.6));box-shadow:0 0 70px rgba(95,200,160,.45);display:flex;align-items:center;justify-content:center;transform:scale(.7);transition:transform 1s ease-in-out}
+  .b-count{font-family:'Fraunces',serif;font-size:52px;font-weight:600;color:#fff}
+  .b-phase{font-family:'Fraunces',serif;font-size:30px;margin-top:36px;letter-spacing:.02em}
+  .b-info{font-size:13px;color:#9dc4b6;margin-top:8px}
+  .b-actions{display:flex;gap:12px;margin-top:40px}
+  .b-actions button{padding:13px 26px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .b-actions button.fin{background:#fff;color:#1e3a34;border:none}
+  .hide{display:none}
+  #rehearse{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 800px at 50% 40%,#2a3a55,#101826);display:none;flex-direction:column;align-items:center;justify-content:center;color:#eaf0f8;padding:30px;text-align:center}
+  #rehearse.show{display:flex}
+  .rh-step{font-family:'Fraunces',serif;font-size:24px;line-height:1.5;max-width:430px}
+  .rh-count{font-size:14px;color:#9fb3d0;margin-top:20px}
+  /* ===== mascota ===== */
+  .pet-scene{position:relative;height:380px;border-radius:var(--radius);overflow:hidden;margin-bottom:14px;
+    box-shadow:var(--shadow), inset 0 -40px 70px rgba(60,34,12,.20), inset 0 18px 40px rgba(255,240,210,.35);
+    background:linear-gradient(180deg,#ffe9c4 0%,#ffd9a0 30%,#f4c79a 50%,#cfe6a6 51%,#a9d680 78%,#8cc566 100%);}
+  .pet-glow{position:absolute;left:50%;top:40%;width:330px;height:330px;transform:translate(-50%,-50%);border-radius:50%;z-index:1;
+    background:radial-gradient(circle,rgba(255,247,214,.85) 0%,rgba(255,228,150,.45) 40%,rgba(255,228,150,0) 70%)}
+  .pet-hill{position:absolute;left:50%;bottom:-90px;width:150%;height:280px;transform:translateX(-50%);border-radius:50%;z-index:1;
+    background:radial-gradient(ellipse at 50% 40%,#bfe18c 0%,#9bce6a 55%,#7bbb56 100%);box-shadow:inset 0 14px 30px rgba(255,255,255,.25)}
+  .pet-platform{position:absolute;left:50%;bottom:48px;width:240px;height:54px;transform:translateX(-50%);border-radius:50%;z-index:1;
+    background:radial-gradient(ellipse at center,rgba(40,22,8,.34) 0%,rgba(40,22,8,.16) 45%,rgba(40,22,8,0) 72%)}
+  .pet-sun{position:absolute;top:26px;right:30px;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 38% 38%,#fff3b0,#ffd24d 70%,#ffb43a 100%);box-shadow:0 0 42px rgba(255,196,70,.8);z-index:1}
+  .pet-stage{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;z-index:2}
+  .pet-canvas{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:28px;z-index:2}
+  .pet-canvas canvas{width:100%!important;height:100%!important;display:block}
+  .pet-svg.s-fit .l-bodyfat{transform:scaleX(.9)}
+  .pet-svg{width:250px;height:330px;margin-bottom:0;transform-origin:50% 92%;animation:petBob 3.4s ease-in-out infinite;filter:drop-shadow(0 22px 16px rgba(50,28,10,.34))}
+  @keyframes petBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(-1deg)}}
+  .pet-svg.walk{animation:petWalk 2.4s ease-in-out}
+  @keyframes petWalk{0%{transform:translateX(0)}25%{transform:translateX(-46px) rotate(-3deg)}50%{transform:translateX(-46px) scaleX(-1)}75%{transform:translateX(40px) scaleX(-1) rotate(3deg)}100%{transform:translateX(0) scaleX(1)}}
+  .pet-svg.happy{animation:petHappy .6s ease}
+  @keyframes petHappy{0%,100%{transform:translateY(0)}30%{transform:translateY(-22px) scale(1.05)}60%{transform:translateY(0) scale(.96)}}
+  .pet-svg.ouch{animation:petOuch .5s ease}
+  @keyframes petOuch{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px) rotate(-4deg)}40%{transform:translateX(9px) rotate(4deg)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+
+  /* capas por estado (se muestran/ocultan con clases en .pet-svg) */
+  .l-aura{opacity:0;transition:opacity .5s} .pet-svg.s-aura .l-aura{opacity:1;animation:auraPulse 3s ease-in-out infinite}
+  @keyframes auraPulse{0%,100%{opacity:.55}50%{opacity:.95}}
+  .l-purple{opacity:0;transition:opacity .4s} .pet-svg.s-gasp .l-purple{opacity:.5}
+  .l-bubbles{opacity:0} .pet-svg.s-gasp .l-bubbles{opacity:1;animation:bub 1.4s linear infinite}
+  @keyframes bub{0%{transform:translateY(0);opacity:.0}30%{opacity:.9}100%{transform:translateY(-26px);opacity:0}}
+  .l-bags{opacity:0} .pet-svg.s-tired .l-bags{opacity:.8}
+  .l-brows{opacity:0} .pet-svg.s-angry .l-brows{opacity:1}
+  .l-empty{opacity:0} .pet-svg.s-empty .l-empty{opacity:1;animation:auraPulse 2.5s ease-in-out infinite}
+  .l-bodyfat{transform:scaleX(1);transform-origin:50% 70%;transition:transform .5s} .pet-svg.s-fat .l-bodyfat{transform:scaleX(1.3)}
+  .heart-fill{fill:#e8537a;transition:fill .4s} .pet-svg.s-dimheart .heart-fill{fill:#9a9a9a}
+  /* bocas por ánimo */
+  .m-happy,.m-angry,.m-tired,.m-gasp{opacity:0}
+  .pet-svg.mood-happy .m-happy{opacity:1}
+  .pet-svg.mood-angry .m-angry{opacity:1}
+  .pet-svg.mood-tired .m-tired{opacity:1}
+  .pet-svg.mood-gasp .m-gasp{opacity:1}
+  /* parpadeo y ojos cansados (sobre #eye_left/#eye_right) */
+  #eye_left,#eye_right{transform-box:fill-box;transform-origin:center;transition:transform .12s ease}
+  .pet-svg.blink #eye_left,.pet-svg.blink #eye_right{transform:scaleY(.1)}
+  .pet-svg.mood-tired #eye_left,.pet-svg.mood-tired #eye_right{transform:scaleY(.55)}
+  #pupil_left,#pupil_right{transition:transform .14s ease}
+
+  .pet-bubble{position:absolute;left:50%;top:18px;transform:translateX(-50%) scale(.6);background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px 14px;font-size:14px;font-weight:600;color:var(--ink);box-shadow:var(--shadow);opacity:0;transition:.25s;white-space:nowrap;pointer-events:none;z-index:5}
+  .pet-bubble.show{opacity:1;transform:translateX(-50%) scale(1)}
+  .pet-bubble:after{content:'';position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #fff}
+  .heartpop{position:absolute;font-size:22px;pointer-events:none;animation:hpop 1.1s ease-out forwards;z-index:6}
+  @keyframes hpop{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translateY(-90px) scale(1.2);opacity:0}}
+
+  .pet-status{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ps{display:flex;align-items:center;gap:9px;background:var(--surface2);border-radius:12px;padding:9px 11px;font-size:12.5px;font-weight:500}
+  .ps .pe{font-size:17px}
+  .ps.ok{border-left:3px solid var(--salud)} .ps.bad{border-left:3px solid var(--cuerpo)}
+  .ps .st{font-size:10.5px;color:var(--muted);display:block}
+  .lvlbar{height:12px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-top:8px}
+  .lvlbar > i{display:block;height:100%;background:linear-gradient(90deg,#5FA382,#9ad0b0);border-radius:999px;transition:width .6s}
+  .pupilgrp{transition:transform .14s ease}
+  .mouthgrp{transform-box:fill-box;transform-origin:center}
+  .pet-svg.talk .mouthgrp{animation:talk .26s ease 3}
+  @keyframes talk{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.55)}}
+  .pet-scene.night{background:linear-gradient(180deg,#16213f 0%,#243456 34%,#2f4566 50%,#2a4a39 51%,#22402f 78%,#1b3526 100%)}
+  .pet-scene.night .pet-sun{background:radial-gradient(circle at 38% 38%,#fdfbe7,#dfe4ef 70%,#c4ccdd 100%);box-shadow:0 0 30px rgba(220,226,240,.6)}
+  .pet-scene.night .pet-glow{background:radial-gradient(circle,rgba(190,205,240,.45) 0%,rgba(150,170,220,.18) 42%,rgba(150,170,220,0) 70%)}
+  .pet-scene.night .pet-hill{background:radial-gradient(ellipse at 50% 40%,#2f5340 0%,#264433 55%,#1d3527 100%);box-shadow:inset 0 14px 30px rgba(255,255,255,.08)}
+  .confetti{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:6;animation:confFall linear forwards}
+  @keyframes confFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(360px) rotate(540deg);opacity:0}}
+  .grid40{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:12px}
+  .cell40{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;background:var(--surface2);font-size:11px;color:var(--muted);cursor:pointer;font-family:inherit;transition:.12s}
+  .cell40.on{background:var(--salud);color:#fff;border-color:var(--salud);font-weight:600}
+  .cell40:active{transform:scale(.9)}
+  /* lock */
+  #lock{position:fixed;inset:0;z-index:120;background:radial-gradient(700px 700px at 50% 35%,#3a5a52,#10211d);display:none;flex-direction:column;align-items:center;justify-content:center}
+  #lock.show{display:flex}
+  .lock-box{display:flex;flex-direction:column;align-items:center;width:80%;max-width:300px}
+  .lock-ico{font-size:40px;margin-bottom:6px}
+  .lock-title{font-family:'Fraunces',serif;font-size:26px;color:#fff;margin-bottom:24px}
+  #pinInput{text-align:center;font-size:30px;letter-spacing:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:14px;padding:14px;width:100%;margin-bottom:16px}
+  #pinGo{width:100%;padding:14px;border-radius:14px;border:none;background:#5FA382;color:#fff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer}
+  .lock-err{color:#f0b8a0;font-size:13px;height:18px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Equi<span>librio</span></div>
+    <div class="today" id="todayLbl"></div>
+  </header>
+  <div id="view"></div>
+</div>
+
+<nav class="tabs" id="nav">
+  <button data-tab="hoy" class="on"><span class="ti">✍️</span><span class="tl">Hoy</span></button>
+  <button data-tab="mascota"><span class="ti">🐾</span><span class="tl">Mascota</span></button>
+  <button data-tab="balance"><span class="ti">🧭</span><span class="tl">Balance</span></button>
+  <button data-tab="crecer"><span class="ti">🌱</span><span class="tl">Crecer</span></button>
+  <button data-tab="graficas"><span class="ti">📈</span><span class="tl">Gráficas</span></button>
+  <button data-tab="medicinas"><span class="ti">💊</span><span class="tl">Medicina</span></button>
+  <button data-tab="mas"><span class="ti">⚙️</span><span class="tl">Más</span></button>
+</nav>
+
+<!-- Bloqueo con PIN -->
+<div id="lock">
+  <div class="lock-box">
+    <div class="lock-ico">🔒</div>
+    <div class="lock-title">Equilibrio</div>
+    <input type="text" id="pinInput" inputmode="numeric" pattern="\d*" maxlength="4" placeholder="••••">
+    <button id="pinGo">Entrar</button>
+    <div class="lock-err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- Guía de respiración -->
+<div id="breath">
+  <div class="b-circle" id="bCircle"><div class="b-count" id="bCount">7</div></div>
+  <div class="b-phase" id="bPhase">Prepárate…</div>
+  <div class="b-info" id="bInfo">Ciclo 0 · 7-6-7-6</div>
+  <div class="b-actions">
+    <button id="bToggle">Pausar</button>
+    <button class="fin" id="bFin">Terminar</button>
+  </div>
+</div>
+
+<!-- Ensayo mental guiado -->
+<div id="rehearse">
+  <div class="rh-step" id="rhStep">…</div>
+  <div class="rh-count" id="rhCount"></div>
+  <div class="b-actions">
+    <button id="rhToggle">Pausar</button>
+    <button id="rhSkip">Saltar</button>
+    <button class="fin" id="rhFin">Terminar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- almacenamiento: window.storage (Claude) → localStorage (publicada) → memoria ---------- */
+  var mem={};
+  function lsGet(k){ try{ if(window.localStorage){ var x=localStorage.getItem(k); if(x!=null)return x; } }catch(e){} return (mem[k]!==undefined?mem[k]:null); }
+  function lsSet(k,v){ try{ if(window.localStorage) localStorage.setItem(k,v); }catch(e){} }
+  var store={
+    get:function(k){ return Promise.resolve().then(function(){
+      if(window.storage) return window.storage.get(k).then(function(r){return r?r.value:null;}).catch(function(){return lsGet(k);});
+      return lsGet(k); }); },
+    set:function(k,v){ mem[k]=v; return Promise.resolve().then(function(){
+      if(window.storage) return window.storage.set(k,v).catch(function(){ lsSet(k,v); });
+      lsSet(k,v); }); }
+  };
+
+  /* ---------- estado ---------- */
+  var days={}, meds=[], members=[], activities=[], settings={}, growth={};
+  var tab="hoy", chart=null, radar=null, reminderTimers=[], saveT=null, unlocked=false, petTimer=null, petTaps=[], pet3d=null, curGrowth="habitos";
+
+  var DEPORTES=["Caminar","Trotar","Bicicleta","Gimnasio","Natación","Fútbol","Yoga","Otro"];
+  var EMOCIONES=["En paz","Agradecido","Feliz","Motivado","Esperanzado","Tranquilo","Cansado","Estresado","Ansioso","Triste","Irritado","Abrumado"];
+  var MOODS=[{v:1,e:"😣",t:"Muy bajo"},{v:2,e:"😕",t:"Bajo"},{v:3,e:"😐",t:"Neutro"},{v:4,e:"🙂",t:"Bien"},{v:5,e:"😄",t:"Muy bien"}];
+  var REFLEX=["¿Qué momento de hoy con tu familia quieres recordar?","¿Qué le agradeces a este día, por pequeño que sea?","¿Qué cuidó hoy tu cuerpo y qué cuidó tu mente?","Si mañana solo pudieras mejorar una cosa, ¿cuál sería?","¿Cuándo te sentiste más en paz hoy?","¿Qué te robó energía y qué te la devolvió?"];
+  var FAM_COLORS=["#C4577A","#E0789E","#9B5C8C","#6E4B8C","#B05A6E","#8A4B7D","#C77FA0"];
+  var DEFAULT_MEMBERS=[
+    {id:"smit",name:"Smit",role:"Hijo",emoji:"🧒"},
+    {id:"laura",name:"Laura",role:"Hija",emoji:"👧"},
+    {id:"matias",name:"Matías",role:"Hijo",emoji:"🧒"},
+    {id:"esposa",name:"Esposa",role:"Esposa",emoji:"💑"},
+    {id:"madre",name:"Madre",role:"Madre",emoji:"👩"},
+    {id:"padre",name:"Padre",role:"Padre",emoji:"👨"}
+  ];
+  var DEFAULT_SETTINGS={metaMente:30,metaCuerpo:30,metaFamilia:60,metaRespira:10,notif:false,pet3d:true};
+
+  function todayKey(){ return offsetKey(0); }
+  function offsetKey(off){ var d=new Date(); d.setDate(d.getDate()+off); var m=d.getMonth()+1,day=d.getDate(); return d.getFullYear()+"-"+(m<10?"0"+m:m)+"-"+(day<10?"0"+day:day); }
+  function fmtToday(){ return new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'}); }
+  function uid(p){ return (p||"x")+Date.now()+Math.floor(Math.random()*1000); }
+  function blankDay(){ return {lectura:0,meditacion:0,oracion:0,respiracion:0,deporte:0,deporteTipo:"",sueno:0,libro:{titulo:"",nota:""},animo:null,emociones:[],familia:{},custom:{},peso:null,meds:{},nota:""}; }
+  function getDay(k){ if(!days[k]) days[k]=blankDay(); var d=days[k];
+    if(!d.familia)d.familia={}; if(!d.custom)d.custom={}; if(!d.libro)d.libro={titulo:"",nota:""}; if(!d.emociones)d.emociones=[]; if(!d.meds)d.meds={}; return d; }
+
+  function persist(key,obj){ store.set(key,JSON.stringify(obj)); }
+  function persistDays(){ persist("eq:days",days); }
+
+  /* ---------- arranque ---------- */
+  function boot(){
+    document.getElementById("todayLbl").textContent=fmtToday();
+    Promise.all([store.get("eq:days"),store.get("eq:meds"),store.get("eq:members"),store.get("eq:activities"),store.get("eq:settings"),store.get("eq:growth")]).then(function(r){
+      days=parse(r[0],{}); meds=parse(r[1],[]); members=parse(r[2],null); activities=parse(r[3],[]); settings=parse(r[4],null); growth=parse(r[5],null);
+      if(!members||!members.length){ members=DEFAULT_MEMBERS.slice(); persist("eq:members",members); }
+      if(!settings){ settings={}; for(var s in DEFAULT_SETTINGS) settings[s]=DEFAULT_SETTINGS[s]; persist("eq:settings",settings); }
+      for(var d in DEFAULT_SETTINGS){ if(settings[d]===undefined) settings[d]=DEFAULT_SETTINGS[d]; }
+      if(!growth) growth={};
+      if(!growth.identity)growth.identity=[]; if(!growth.stacks)growth.stacks=[]; if(growth.futureSelf===undefined)growth.futureSelf=""; if(!growth.patterns)growth.patterns=[]; if(!growth.reframes)growth.reframes=[];
+      if(growth.purpose===undefined)growth.purpose=""; if(!growth.values)growth.values=[]; if(!growth.reto)growth.reto={meta:"",marcas:[]};
+      if(!growth.power)growth.power=[]; if(!growth.afirmaciones)growth.afirmaciones=[]; if(growth.metaGrande===undefined)growth.metaGrande="";
+      if(!growth.people)growth.people=[]; if(!growth.aprecios)growth.aprecios=[];
+      if(!growth.books){ growth.books=[
+        {id:uid("bk"),title:"Hábitos atómicos",author:"James Clear",pages:0,current:0,notes:[],done:false},
+        {id:uid("bk"),title:"Deja de ser tú",author:"Joe Dispenza",pages:0,current:0,notes:[],done:false},
+        {id:uid("bk"),title:"El poder del pensamiento flexible",author:"Walter Riso",pages:0,current:0,notes:[],done:false},
+        {id:uid("bk"),title:"Una vida con propósito",author:"Rick Warren",pages:0,current:0,notes:[],done:false},
+        {id:uid("bk"),title:"Vendes o vendes",author:"Grant Cardone",pages:0,current:0,notes:[],done:false},
+        {id:uid("bk"),title:"Cómo ganar amigos e influir sobre las personas",author:"Dale Carnegie",pages:0,current:0,notes:[],done:false}
+      ]; persistGrowth(); }
+      if(!growth.weekly)growth.weekly={win:"",adjust:"",focus:"",date:""};
+      scheduleReminders();
+      if(settings.pin && !unlocked) showLock(); else render();
+    });
+    document.getElementById("nav").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return;
+      tab=b.getAttribute("data-tab");
+      var btns=document.querySelectorAll("#nav button"); for(var i=0;i<btns.length;i++) btns[i].classList.toggle("on",btns[i]===b);
+      render(); });
+    initBreath(); initLock(); initRehearse();
+  }
+  function showLock(){ document.getElementById("lock").classList.add("show"); var i=document.getElementById("pinInput"); if(i){ i.value=""; setTimeout(function(){i.focus();},200); } }
+  function tryUnlock(){ var i=document.getElementById("pinInput"); var err=document.getElementById("pinErr");
+    if(i.value===settings.pin){ unlocked=true; document.getElementById("lock").classList.remove("show"); render(); }
+    else { err.textContent="PIN incorrecto"; i.value=""; setTimeout(function(){err.textContent="";},1500); } }
+  function initLock(){ var b=document.getElementById("pinGo"); if(b)b.addEventListener("click",tryUnlock);
+    var i=document.getElementById("pinInput"); if(i)i.addEventListener("keydown",function(e){ if(e.key==="Enter")tryUnlock(); }); }
+  function parse(s,def){ try{ return s?JSON.parse(s):def; }catch(e){ return def; } }
+
+  function render(){
+    if(chart){chart.dispose();chart=null;} if(radar){radar.dispose();radar=null;}
+    if(petTimer){clearInterval(petTimer);petTimer=null;}
+    if(pet3d){ try{pet3d.dispose();}catch(e){} pet3d=null; }
+    var v=document.getElementById("view");
+    if(tab==="hoy")v.innerHTML=viewHoy();
+    else if(tab==="mascota")v.innerHTML=viewMascota();
+    else if(tab==="crecer")v.innerHTML=viewCrecer();
+    else if(tab==="balance")v.innerHTML=viewBalance();
+    else if(tab==="graficas")v.innerHTML=viewGraficas();
+    else if(tab==="medicinas")v.innerHTML=viewMedicinas();
+    else if(tab==="mas")v.innerHTML=viewMas();
+    bind();
+  }
+
+  /* ===================== HOY ===================== */
+  function minStepper(field,label,ico,step,sub){
+    var d=getDay(todayKey());
+    return '<div class="row"><div class="lbl"><span class="ico">'+ico+'</span><span>'+label+(sub?'<small>'+sub+'</small>':'')+'</span></div>'+
+      '<div class="stepper" data-field="'+field+'" data-step="'+(step||5)+'"><button data-act="dec">−</button>'+
+      '<span class="val">'+(d[field]||0)+' <small>min</small></span><button data-act="inc">+</button></div></div>';
+  }
+  function viewHoy(){
+    var d=getDay(todayKey()); var h="";
+
+    // Mente y espíritu
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--mente)"></span>Mente & espíritu</div>'+
+      minStepper("lectura","Lectura","📖",5)+
+      '<div class="collapse" style="margin-top:0;border:none;padding-top:8px">'+
+        '<label class="fld">📚 ¿Qué libro estás leyendo?</label>'+
+        '<input type="text" id="libroTit" placeholder="Título del libro" value="'+esc(d.libro.titulo)+'">'+
+        '<label class="fld" style="margin-top:10px">✍️ Algo que te impactó (opcional)</label>'+
+        '<textarea id="libroNota" placeholder="Una frase, idea o aprendizaje que quieras recordar…">'+esc(d.libro.nota)+'</textarea>'+
+      '</div>'+
+      minStepper("meditacion","Meditación","🧘",5)+
+      minStepper("oracion","Oración","🙏",5)+
+      minStepper("respiracion","Respiración","🌬️",1)+
+      '<button class="btn btn-mente" id="openBreath" style="margin-top:12px">🌬️ Iniciar guía de respiración 7·6·7·6</button>'+
+    '</div>';
+
+    // Otros hábitos personalizados
+    if(activities.length){
+      var hb="";
+      for(var a=0;a<activities.length;a++){ var ac=activities[a]; var val=(d.custom[ac.id]||0);
+        hb+='<div class="row"><div class="lbl"><span class="ico">'+ac.emoji+'</span>'+esc(ac.name)+'</div>'+
+          '<div class="stepper" data-custom="'+ac.id+'" data-step="5"><button data-act="dec">−</button>'+
+          '<span class="val">'+val+' <small>min</small></span><button data-act="inc">+</button></div></div>';
+      }
+      h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--mente)"></span>Otros hábitos</div>'+hb+'</div>';
+    }
+
+    // Cuerpo
+    var opts=""; for(var i=0;i<DEPORTES.length;i++) opts+='<option'+(d.deporteTipo===DEPORTES[i]?' selected':'')+'>'+DEPORTES[i]+'</option>';
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--cuerpo)"></span>Cuerpo</div>'+
+      minStepper("deporte","Deporte","💪",5)+
+      '<div style="padding:11px 0;border-bottom:1px dashed var(--line)"><label class="fld">¿Qué deporte / actividad?</label>'+
+        '<select id="depTipo"><option value="">Seleccionar…</option>'+opts+'</select></div>'+
+      '<div style="padding-top:11px"><label class="fld">Peso (kg)</label>'+
+        '<input type="number" step="0.1" id="peso" placeholder="Ej: 84,5" value="'+(d.peso!=null?d.peso:"")+'">'+
+        '<div class="small-note">Sugerencia: pésate 1–2 veces por semana, a la misma hora. Lo que importa es la tendencia, no el número de un día.</div></div></div>';
+
+    // Descanso
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:#7E8FE0"></span>Descanso</div>'+
+      '<div class="row"><div class="lbl"><span class="ico">😴</span>Horas dormidas</div>'+
+      '<div class="stepper" data-sleep="1" data-step="0.5"><button data-act="dec">−</button>'+
+      '<span class="val">'+(d.sueno||0)+' <small>h</small></span><button data-act="inc">+</button></div></div></div>';
+
+    // Ánimo + emociones
+    var moodsH=""; for(var j=0;j<MOODS.length;j++){ var m=MOODS[j]; moodsH+='<div class="mood'+(d.animo===m.v?' sel':'')+'" data-mood="'+m.v+'"><span class="e">'+m.e+'</span><span class="t">'+m.t+'</span></div>'; }
+    var chipsH=""; for(var e=0;e<EMOCIONES.length;e++){ var sel=d.emociones.indexOf(EMOCIONES[e])>=0; chipsH+='<span class="chip'+(sel?' sel':'')+'" data-emo="'+EMOCIONES[e]+'">'+EMOCIONES[e]+'</span>'; }
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--emo)"></span>Estado de ánimo</div>'+
+      '<div class="moods">'+moodsH+'</div>'+
+      '<label class="fld" style="margin-top:16px">¿Qué emociones sentiste hoy?</label><div class="chips">'+chipsH+'</div></div>';
+
+    // Familia (miembros)
+    var famH="";
+    for(var f=0;f<members.length;f++){ var mb=members[f]; var fv=(d.familia[mb.id]||0);
+      famH+='<div class="row"><div class="lbl"><span class="ico">'+mb.emoji+'</span><span>'+esc(mb.name)+'<small>'+esc(mb.role)+'</small></span></div>'+
+        '<div class="stepper" data-fam="'+mb.id+'" data-step="10"><button data-act="dec">−</button>'+
+        '<span class="val">'+fv+' <small>min</small></span><button data-act="inc">+</button></div></div>';
+    }
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--familia)"></span>Tiempo en familia</div>'+famH+
+      '<div class="small-note">Para agregar o editar personas ve a la pestaña ⚙️ Más.</div></div>';
+
+    // Medicinas
+    var medsH="";
+    if(meds.length===0) medsH='<div class="empty">Aún no agregas medicinas. Ve a 💊 Medicina.</div>';
+    else for(var k=0;k<meds.length;k++){ var md=meds[k]; var on=!!d.meds[md.id];
+      medsH+='<div class="med"><div class="check'+(on?' on':'')+'" data-med="'+md.id+'">'+(on?'✓':'')+'</div>'+
+        '<div class="info"><div class="n">'+esc(md.nombre)+'</div><div class="h">'+(md.hora?'🕐 '+md.hora:'')+(md.dosis?' · '+esc(md.dosis):'')+'</div></div></div>'; }
+    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--salud)"></span>Medicinas de hoy</div>'+medsH+'</div>';
+
+    h+='<div class="card"><label class="fld">Nota del día (opcional)</label>'+
+      '<textarea id="nota" placeholder="¿Cómo te fue hoy? Algo que quieras recordar…">'+esc(d.nota||"")+'</textarea></div>';
+    h+='<button class="btn btn-primary" id="saveBtn">Guardar ahora</button><div class="saved show" id="savedMsg" style="opacity:1">Se guarda solo a cada cambio ✓</div>';
+    return h;
+  }
+
+  /* ===================== MASCOTA ===================== */
+  var PET_KS=['oracion','dormir','ejercicio','familia','lectura','meditacion','respiracion'];
+  function petState(d){ d=d||{}; var fam=0; if(d.familia)for(var k in d.familia)fam+=d.familia[k]||0;
+    return {oracion:(d.oracion||0)>0,dormir:(d.sueno||0)>=6,ejercicio:(d.deporte||0)>0,familia:fam>0,lectura:(d.lectura||0)>0,meditacion:(d.meditacion||0)>0,respiracion:(d.respiracion||0)>0}; }
+  function petDone(st){ var n=0; for(var i=0;i<PET_KS.length;i++) if(st[PET_KS[i]])n++; return n; }
+  function petClasses(st){ var c=[]; if(st.oracion)c.push('s-aura'); if(!st.ejercicio)c.push('s-fat'); else c.push('s-fit'); if(!st.familia)c.push('s-dimheart'); if(!st.lectura)c.push('s-empty');
+    if(!st.respiracion)c.push('mood-gasp','s-gasp'); else if(!st.meditacion)c.push('mood-angry','s-angry'); else if(!st.dormir)c.push('mood-tired','s-tired'); else c.push('mood-happy');
+    return c.join(' '); }
+  function petXP(){ var x=0; for(var k in days) x+=petDone(petState(days[k])); return x; }
+  function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  function petSVG(){ return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 600 800\" width=\"100%\" height=\"100%\" preserveAspectRatio=\"xMidYMid meet\">\n  <defs>\n    <radialGradient id=\"furBrown\" cx=\"45%\" cy=\"35%\" r=\"65%\">\n      <stop offset=\"0%\" stop-color=\"#8b4a34\"/>\n      <stop offset=\"55%\" stop-color=\"#633026\"/>\n      <stop offset=\"100%\" stop-color=\"#371a17\"/>\n    </radialGradient>\n    <radialGradient id=\"faceCream\" cx=\"50%\" cy=\"40%\" r=\"70%\">\n      <stop offset=\"0%\" stop-color=\"#f4d5a1\"/>\n      <stop offset=\"70%\" stop-color=\"#c58c5a\"/>\n      <stop offset=\"100%\" stop-color=\"#7c3e2d\"/>\n    </radialGradient>\n    <radialGradient id=\"bellyCream\" cx=\"50%\" cy=\"40%\" r=\"70%\">\n      <stop offset=\"0%\" stop-color=\"#eac38e\"/>\n      <stop offset=\"80%\" stop-color=\"#b7774e\"/>\n      <stop offset=\"100%\" stop-color=\"#5c2a21\"/>\n    </radialGradient>\n    <radialGradient id=\"noseGrad\" cx=\"40%\" cy=\"35%\" r=\"70%\">\n      <stop offset=\"0%\" stop-color=\"#8c5a50\"/>\n      <stop offset=\"65%\" stop-color=\"#4a2829\"/>\n      <stop offset=\"100%\" stop-color=\"#201212\"/>\n    </radialGradient>\n    <linearGradient id=\"leafGrad\" x1=\"0\" x2=\"1\">\n      <stop offset=\"0\" stop-color=\"#c5d56a\"/>\n      <stop offset=\"1\" stop-color=\"#798b2c\"/>\n    </linearGradient>\n    <radialGradient id=\"auraGrad\" cx=\"50%\" cy=\"50%\" r=\"50%\">\n      <stop offset=\"0%\" stop-color=\"#fff6c8\" stop-opacity=\".95\"/>\n      <stop offset=\"55%\" stop-color=\"#ffd86b\" stop-opacity=\".5\"/>\n      <stop offset=\"100%\" stop-color=\"#ffd86b\" stop-opacity=\"0\"/>\n    </radialGradient>\n    <filter id=\"softShadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"140%\">\n      <feDropShadow dx=\"0\" dy=\"10\" stdDeviation=\"10\" flood-color=\"#000\" flood-opacity=\"0.18\"/>\n    </filter>\n    <filter id=\"furNoise\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\">\n      <feTurbulence type=\"fractalNoise\" baseFrequency=\"0.75\" numOctaves=\"3\" seed=\"7\" result=\"noise\"/>\n      <feColorMatrix in=\"noise\" type=\"saturate\" values=\"0\" result=\"mono\"/>\n      <feBlend in=\"SourceGraphic\" in2=\"mono\" mode=\"multiply\"/>\n    </filter>\n    <style>.rig{transform-box:fill-box;transform-origin:center}.strokeRound{stroke-linecap:round;stroke-linejoin:round}</style>\n  </defs>\n\n  <g class=\"l-aura\"><circle cx=\"300\" cy=\"285\" r=\"380\" fill=\"url(#auraGrad)\"/></g>\n  <g class=\"l-empty\"><ellipse cx=\"300\" cy=\"70\" rx=\"72\" ry=\"46\" fill=\"none\" stroke=\"#8a8576\" stroke-width=\"6\" stroke-dasharray=\"12 12\"/><text x=\"300\" y=\"90\" text-anchor=\"middle\" font-size=\"56\" fill=\"#8a8576\">\u2026</text></g>\n\n  <g id=\"character_root\" filter=\"url(#softShadow)\">\n    <ellipse id=\"ground_shadow\" cx=\"300\" cy=\"748\" rx=\"160\" ry=\"26\" fill=\"#000\" opacity=\"0.16\"/>\n\n    <g id=\"body\" class=\"rig l-bodyfat\">\n      <ellipse id=\"body_fur\" cx=\"300\" cy=\"505\" rx=\"150\" ry=\"220\" fill=\"url(#furBrown)\" filter=\"url(#furNoise)\"/>\n      <ellipse class=\"l-purple\" cx=\"300\" cy=\"505\" rx=\"150\" ry=\"220\" fill=\"#7b53c9\"/>\n      <ellipse id=\"belly\" cx=\"300\" cy=\"525\" rx=\"86\" ry=\"170\" fill=\"url(#bellyCream)\" opacity=\"0.95\"/>\n    </g>\n\n    <g transform=\"translate(248 508) scale(4.3)\"><path class=\"heart-fill\" d=\"M12 21s-9-5.5-9-12a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-9 12-9 12z\"/></g>\n\n    <g id=\"head\" class=\"rig\">\n      <ellipse id=\"head_fur\" cx=\"300\" cy=\"250\" rx=\"178\" ry=\"154\" fill=\"url(#furBrown)\" filter=\"url(#furNoise)\"/>\n      <ellipse class=\"l-purple\" cx=\"300\" cy=\"250\" rx=\"178\" ry=\"154\" fill=\"#7b53c9\"/>\n      <ellipse id=\"face_mask\" cx=\"300\" cy=\"270\" rx=\"145\" ry=\"112\" fill=\"url(#faceCream)\"/>\n      <path id=\"left_ear\" d=\"M147 242 C94 227 61 204 54 180 C101 171 149 185 176 218Z\" fill=\"#5d2b22\"/>\n      <path id=\"right_ear\" d=\"M453 242 C506 227 539 204 546 180 C499 171 451 185 424 218Z\" fill=\"#5d2b22\"/>\n      <g id=\"hair_tufts\" class=\"rig\" fill=\"#5a231c\">\n        <path d=\"M202 120 C219 66 279 76 283 137 C293 63 370 69 351 146 C395 101 447 125 407 176 C355 144 265 146 199 174 C166 153 170 132 202 120Z\"/>\n        <path d=\"M258 98 C240 52 294 38 323 112 C342 64 397 73 373 132 C330 112 293 111 258 98Z\" fill=\"#81331f\" opacity=\"0.75\"/>\n        <path d=\"M177 136 C131 99 85 128 106 164 C139 160 165 151 193 155Z\" fill=\"#81331f\" opacity=\"0.75\"/>\n        <path d=\"M425 138 C470 103 519 130 494 166 C461 160 435 151 407 155Z\" fill=\"#81331f\" opacity=\"0.75\"/>\n      </g>\n    </g>\n\n    <g id=\"eyes\" class=\"rig\">\n      <g id=\"eye_left\">\n        <ellipse cx=\"236\" cy=\"238\" rx=\"32\" ry=\"42\" fill=\"#f5eed2\"/>\n        <ellipse id=\"pupil_left\" cx=\"239\" cy=\"244\" rx=\"20\" ry=\"27\" fill=\"#111b12\"/>\n        <circle cx=\"231\" cy=\"232\" r=\"8\" fill=\"#fff\" opacity=\"0.9\"/>\n      </g>\n      <g id=\"eye_right\">\n        <ellipse cx=\"364\" cy=\"238\" rx=\"32\" ry=\"42\" fill=\"#f5eed2\"/>\n        <ellipse id=\"pupil_right\" cx=\"361\" cy=\"244\" rx=\"20\" ry=\"27\" fill=\"#111b12\"/>\n        <circle cx=\"353\" cy=\"232\" r=\"8\" fill=\"#fff\" opacity=\"0.9\"/>\n      </g>\n    </g>\n\n    <g class=\"l-brows\"><path d=\"M204 196 L270 180\" stroke=\"#3a1c16\" stroke-width=\"15\" stroke-linecap=\"round\"/><path d=\"M396 196 L330 180\" stroke=\"#3a1c16\" stroke-width=\"15\" stroke-linecap=\"round\"/></g>\n    <g class=\"l-bags\"><path d=\"M210 288 Q236 306 262 288\" stroke=\"#5a3a78\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M338 288 Q364 306 390 288\" stroke=\"#5a3a78\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/></g>\n    <g class=\"l-bubbles\"><circle cx=\"436\" cy=\"318\" r=\"13\" fill=\"#bfe0ff\"/><circle cx=\"460\" cy=\"292\" r=\"10\" fill=\"#bfe0ff\"/><circle cx=\"424\" cy=\"280\" r=\"7\" fill=\"#bfe0ff\"/></g>\n\n    <g id=\"face_controls\" class=\"rig\">\n      <ellipse id=\"nose\" cx=\"300\" cy=\"293\" rx=\"64\" ry=\"43\" fill=\"url(#noseGrad)\"/>\n      <path id=\"nose_shine\" d=\"M268 276 C283 262 318 263 335 279\" fill=\"none\" stroke=\"#b38378\" stroke-width=\"8\" opacity=\"0.28\" class=\"strokeRound\"/>\n      <g class=\"mouthgrp\">\n        <path class=\"m-happy strokeRound\" d=\"M232 344 C278 405 337 405 380 344\" fill=\"none\" stroke=\"#2b1514\" stroke-width=\"16\"/>\n        <path class=\"m-tired strokeRound\" d=\"M247 348 C281 380 333 380 364 348\" fill=\"none\" stroke=\"#2b1514\" stroke-width=\"12\"/>\n        <path class=\"m-angry strokeRound\" d=\"M236 372 C278 320 333 320 376 372\" fill=\"none\" stroke=\"#2b1514\" stroke-width=\"14\"/>\n        <ellipse class=\"m-gasp\" cx=\"306\" cy=\"362\" rx=\"26\" ry=\"34\" fill=\"#2b1514\"/>\n      </g>\n      <g id=\"cheeks\" opacity=\"1\">\n        <ellipse cx=\"213\" cy=\"318\" rx=\"24\" ry=\"14\" fill=\"#ec9c82\" opacity=\"0.35\"/>\n        <ellipse cx=\"387\" cy=\"318\" rx=\"24\" ry=\"14\" fill=\"#ec9c82\" opacity=\"0.35\"/>\n      </g>\n    </g>\n\n    <g id=\"arms\" class=\"rig\">\n      <path id=\"left_arm\" d=\"M193 404 C151 470 164 542 231 540 C269 539 270 482 233 459 C214 447 206 421 193 404Z\" fill=\"#52251e\"/>\n      <path id=\"right_arm\" d=\"M407 404 C449 470 436 542 369 540 C331 539 330 482 367 459 C386 447 394 421 407 404Z\" fill=\"#52251e\"/>\n      <ellipse id=\"left_paw\" cx=\"248\" cy=\"470\" rx=\"34\" ry=\"31\" fill=\"#6f3328\"/>\n      <ellipse id=\"right_paw\" cx=\"352\" cy=\"470\" rx=\"34\" ry=\"31\" fill=\"#6f3328\"/>\n    </g>\n\n    <g id=\"bag_and_strap\" class=\"rig\">\n      <path id=\"strap\" d=\"M174 314 C250 408 329 491 424 594\" fill=\"none\" stroke=\"#8ea641\" stroke-width=\"18\" class=\"strokeRound\"/>\n      <path id=\"bag_body\" d=\"M382 548 C429 544 455 590 442 644 C426 697 354 696 339 642 C327 596 342 560 382 548Z\" fill=\"#9a6e41\"/>\n      <path id=\"bag_leaf\" d=\"M381 529 C430 506 466 542 458 598 C409 592 373 568 381 529Z\" fill=\"url(#leafGrad)\"/>\n      <path id=\"bag_leaf_vein\" d=\"M394 539 C414 551 435 566 451 590\" fill=\"none\" stroke=\"#6c7c27\" stroke-width=\"4\" opacity=\"0.55\" class=\"strokeRound\"/>\n      <path id=\"bag_tie\" d=\"M366 545 C377 533 394 533 405 545\" fill=\"none\" stroke=\"#6b812d\" stroke-width=\"8\" class=\"strokeRound\"/>\n    </g>\n\n    <g id=\"legs\" class=\"rig\">\n      <path id=\"left_leg\" d=\"M221 674 C188 720 212 755 263 744 C292 739 288 685 257 665Z\" fill=\"#371916\"/>\n      <path id=\"right_leg\" d=\"M379 674 C412 720 388 755 337 744 C308 739 312 685 343 665Z\" fill=\"#371916\"/>\n      <ellipse id=\"left_foot\" cx=\"233\" cy=\"735\" rx=\"44\" ry=\"18\" fill=\"#2b1412\"/>\n      <ellipse id=\"right_foot\" cx=\"367\" cy=\"735\" rx=\"44\" ry=\"18\" fill=\"#2b1412\"/>\n    </g>\n  </g>\n</svg>"; }
+
+  function viewMascota(){
+    var d=getDay(todayKey()); var st=petState(d); var cls=petClasses(st); var done=petDone(st);
+    var name=esc(settings.petName||"Koa"); var xp=petXP(); var lvl=Math.floor(xp/10)+1; var prog=(xp%10)*10;
+    var info=[
+      {k:'oracion',e:'🙏',l:'Oración',ok:'tiene aura ✨',bad:'sin aura'},
+      {k:'dormir',e:'😴',l:'Dormir 6h+',ok:'descansado',bad:'con ojeras 😪'},
+      {k:'ejercicio',e:'💪',l:'Ejercicio',ok:'en forma',bad:'gordito'},
+      {k:'familia',e:'❤️',l:'Familia',ok:'corazón vivo',bad:'corazón opaco'},
+      {k:'lectura',e:'📖',l:'Leer',ok:'mente llena',bad:'cabeza vacía'},
+      {k:'meditacion',e:'🧘',l:'Meditar',ok:'en calma',bad:'enojado'},
+      {k:'respiracion',e:'🌬️',l:'Respirar',ok:'respira bien',bad:'morado, ahogándose'}
+    ];
+    var status=""; for(var i=0;i<info.length;i++){ var it=info[i],okk=st[it.k];
+      status+='<div class="ps '+(okk?'ok':'bad')+'"><span class="pe">'+it.e+'</span><span>'+it.l+'<span class="st">'+(okk?it.ok:it.bad)+'</span></span></div>'; }
+
+    var h='<div class="pet-scene"><div class="pet-sun"></div><div class="pet-glow"></div><div class="pet-hill"></div><div class="pet-platform"></div><div class="pet-bubble" id="petBubble"></div>'+
+      '<div class="pet-stage" id="petStage"><div class="pet-canvas" id="petCanvas"></div></div></div>';
+    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+      '<div><h2 style="margin:0">'+name+'</h2><div class="sub" style="margin:2px 0 0">Nivel '+lvl+' · '+done+'/7 hábitos hoy · '+(settings.explores||0)+' exploraciones</div></div>'+
+      '<button class="btn btn-soft" id="renamePet" style="width:auto;padding:8px 12px;margin:0">✏️ Nombre</button></div>'+
+      '<div class="lvlbar"><i style="width:'+prog+'%"></i></div>'+
+      '<button class="btn btn-mente" id="exploreBtn" style="margin-top:14px'+(done>=4?'':';opacity:.5')+'">🧭 Salir a explorar</button>'+
+      '<button class="btn btn-soft" id="toggle3d" style="margin-top:8px">'+(settings.pet3d?'🎨 Ver Koa dibujado (2D)':'🧸 Ver Koa 3D')+'</button>'+
+      '<div class="small-note">Toca a '+name+' para acariciarlo 🥰. Crece y sale a explorar cuando cuidas tus hábitos. Es una mascota original (no un personaje con derechos de autor).</div></div>';
+    h+='<div class="card"><div class="sec-label">¿Cómo está '+name+' hoy?</div><div class="pet-status">'+status+'</div>'+
+      '<div class="small-note">Completa lo que falta en ✍️ Hoy y mírala cambiar aquí.</div></div>';
+    return h;
+  }
+
+  function petSpeak(msg){ var b=document.getElementById("petBubble"); if(!b)return; b.textContent=msg; b.classList.add("show"); clearTimeout(b._t); b._t=setTimeout(function(){ b.classList.remove("show"); },2200);
+    var s=document.getElementById("petSvg"); if(s){ s.classList.remove("talk"); void s.offsetWidth; s.classList.add("talk"); setTimeout(function(){ s.classList.remove("talk"); },820); } }
+  function petAnim(cl,ms){ var s=document.getElementById("petSvg"); if(!s)return; s.classList.remove(cl); void s.offsetWidth; s.classList.add(cl); setTimeout(function(){ s.classList.remove(cl); },ms); }
+  function spawnHearts(){ var sc=document.querySelector(".pet-scene"); if(!sc)return; for(var i=0;i<3;i++){ (function(n){ var sp=document.createElement("span"); sp.className="heartpop"; sp.textContent="💛"; sp.style.left=(42+Math.random()*30)+"%"; sp.style.bottom="150px"; sp.style.animationDelay=(n*0.12)+"s"; sc.appendChild(sp); setTimeout(function(){ if(sp.parentNode)sp.parentNode.removeChild(sp); },1300); })(i); } }
+  function spawnConfetti(){ var sc=document.querySelector(".pet-scene"); if(!sc)return; var cols=["#5FA382","#E0A92E","#C4577A","#6C7BD1","#D9794E"]; for(var i=0;i<26;i++){ (function(){ var c=document.createElement("span"); c.className="confetti"; c.style.left=(Math.random()*100)+"%"; c.style.background=cols[Math.floor(Math.random()*cols.length)]; var dur=1.2+Math.random()*1.2; c.style.animationDuration=dur+"s"; c.style.animationDelay=(Math.random()*0.3)+"s"; sc.appendChild(c); setTimeout(function(){ if(c.parentNode)c.parentNode.removeChild(c); },(dur+0.5)*1000); })(); } }
+  function vib(p){ try{ if(navigator.vibrate)navigator.vibrate(p); }catch(e){} }
+  function petLook(dx,dy){ dx=Math.max(-9,Math.min(9,dx)); dy=Math.max(-6,Math.min(6,dy)); var t="translate("+dx.toFixed(1)+"px,"+dy.toFixed(1)+"px)"; var l=document.getElementById("pupil_left"),r=document.getElementById("pupil_right"); if(l)l.style.transform=t; if(r)r.style.transform=t; }
+  function setupEyeFollow(){ var stage=document.getElementById("petStage"); if(!stage)return;
+    stage.addEventListener("pointermove",function(e){ var rc=stage.getBoundingClientRect(); petLook(((e.clientX-rc.left)/rc.width-0.5)*9, ((e.clientY-rc.top)/rc.height-0.5)*5); });
+    stage.addEventListener("pointerleave",function(){ petLook(0,0); }); }
+  function petTapHandler(){ var now=Date.now(); petTaps.push(now); petTaps=petTaps.filter(function(t){return now-t<1300;});
+    if(petTaps.length>=4){ petTaps=[]; vib([30,40,30]); if(pet3d)pet3d.ouch(); else petAnim("ouch",520); petSpeak(rnd(["¡No! eso no 😣","¡Ay! no me pegues 🥺","¡Auch! sé gentil"])); }
+    else { vib(18); if(pet3d)pet3d.bounce(); else petAnim("happy",650); spawnHearts(); petSpeak(rnd(["¡Me encanta! 🥰","Jiji 💛","Otra vez 😊","Me haces feliz","Qué rico ✨"])); } }
+  function petExplore(){ var d=getDay(todayKey()); var done=petDone(petState(d));
+    if(done<4){ petSpeak("Necesito más hábitos para explorar 🧭"); return; }
+    settings.explores=(settings.explores||0)+1; persist("eq:settings",settings); vib(25); spawnConfetti();
+    if(pet3d)pet3d.hop(); else petAnim("walk",2400); petSpeak(rnd(["¡Encontré una baya! 🫐","¡Mira, una flor! 🌼","¡Exploré el bosque! 🌳","¡Hallé un tesoro! 💎","¡Qué aventura! ✨"]));
+    var sub=document.querySelector(".pet-scene + .card .sub"); if(sub) sub.textContent=sub.textContent.replace(/\d+ exploraciones/, (settings.explores)+" exploraciones"); }
+  function startPetLoop(){ petTimer=setInterval(function(){ var s=document.getElementById("petSvg"); if(!s)return;
+    s.classList.add("blink"); setTimeout(function(){ s.classList.remove("blink"); },140);
+    if(Math.random()<0.45){ petLook((Math.random()*2-1)*4,(Math.random()*2-1)*2); setTimeout(function(){ petLook(0,0); },900); }
+    if(Math.random()<0.18 && (" "+s.className+" ").indexOf("mood-gasp")<0 && (" "+s.className+" ").indexOf("walk")<0){ petAnim("walk",2400); }
+  },3200); }
+
+  function mountPet(){
+    var cont=document.getElementById("petCanvas"); if(!cont)return;
+    var st=petState(getDay(todayKey()));
+    var scene=document.querySelector(".pet-scene"); if(scene){ var hr=new Date().getHours(); scene.classList.toggle("night", hr>=19||hr<6); }
+    cont.innerHTML='<div class="pet-svg '+petClasses(st)+'" id="petSvg" style="position:relative;margin:0 auto">'+petSVG()+'</div>';
+    setupEyeFollow(); startPetLoop();
+    if(petDone(st)===7){ setTimeout(function(){ spawnConfetti(); petSpeak("¡Día completo! 🎉"); },500); }
+    if(settings.pet3d) tryGLB(cont); else tryRive(cont);
+  }
+
+  /* Koa 3D real: si existe koa.glb junto a la app (versión publicada), se carga con three.js.
+     Mientras carga (o si falla), se queda el Koa vectorial. Totalmente defensivo. */
+  function tryGLB(cont){
+    if(window.__glbOff || !window.THREE) return;
+    function start(){
+      try{
+        var L=new THREE.GLTFLoader();
+        L.load('koa.glb',function(g){
+          try{
+            if(!document.body.contains(cont)) return;
+            var W=cont.clientWidth||340,H=cont.clientHeight||360;
+            var ren=new THREE.WebGLRenderer({antialias:true,alpha:true});
+            ren.setSize(W,H); ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+            if(THREE.sRGBEncoding!==undefined){ ren.outputEncoding=THREE.sRGBEncoding; }
+            var scene=new THREE.Scene();
+            var cam=new THREE.PerspectiveCamera(34,W/H,0.05,80);
+            scene.add(new THREE.HemisphereLight(0xfff4dc,0x6b8f5a,1.05));
+            var key=new THREE.DirectionalLight(0xffe9c0,0.95); key.position.set(2.2,3.5,3); scene.add(key);
+            var rim=new THREE.DirectionalLight(0xbfd9ff,0.5); rim.position.set(-2.5,2,-2.5); scene.add(rim);
+            var model=g.scene;
+            var box=new THREE.Box3().setFromObject(model);
+            var size=box.getSize(new THREE.Vector3());
+            var s=1.55/Math.max(size.y,0.0001); model.scale.multiplyScalar(s);
+            box.setFromObject(model); var ctr=box.getCenter(new THREE.Vector3());
+            model.position.x-=ctr.x; model.position.z-=ctr.z; model.position.y-=box.min.y;
+            scene.add(model);
+            cam.position.set(0,1.05,2.95); cam.lookAt(0,0.8,0);
+            var mixer=null,action=null;
+            if(g.animations&&g.animations.length){ mixer=new THREE.AnimationMixer(model); action=mixer.clipAction(g.animations[0]); action.play(); action.timeScale=0.5; }
+            cont.innerHTML=''; cont.appendChild(ren.domElement);
+            if(petTimer){ clearInterval(petTimer); petTimer=null; }
+            var clock=new THREE.Clock(), targRY=0, raf=null, dead=false;
+            var stage=document.getElementById('petStage');
+            if(stage){ stage.addEventListener('pointermove',function(e){ var rc=stage.getBoundingClientRect(); targRY=(((e.clientX-rc.left)/rc.width)-0.5)*0.9; });
+                       stage.addEventListener('pointerleave',function(){ targRY=0; }); }
+            function loop(){ if(dead)return; raf=requestAnimationFrame(loop); var dt=clock.getDelta(); if(mixer)mixer.update(dt); model.rotation.y+=(targRY-model.rotation.y)*0.08; ren.render(scene,cam); }
+            loop();
+            pet3d={
+              setState:function(){},
+              bounce:function(){ if(action){ action.timeScale=1.4; setTimeout(function(){ if(action)action.timeScale=0.5; },900); } },
+              ouch:function(){ model.rotation.z=0.14; if(action)action.paused=true; setTimeout(function(){ model.rotation.z=0; if(action)action.paused=false; },480); },
+              hop:function(){ if(action){ action.timeScale=2.0; setTimeout(function(){ if(action)action.timeScale=0.5; },1700); } },
+              resize:function(){},
+              dispose:function(){ dead=true; if(raf)cancelAnimationFrame(raf); try{ren.dispose();}catch(e){} }
+            };
+          }catch(e){ window.__glbOff=true; }
+        },undefined,function(){ window.__glbOff=true; });
+      }catch(e){ window.__glbOff=true; }
+    }
+    if(THREE.GLTFLoader){ start(); return; }
+    var sc=document.createElement('script'); sc.src='GLTFLoader.js';
+    sc.onload=function(){ if(THREE.GLTFLoader)start(); else window.__glbOff=true; };
+    sc.onerror=function(){ window.__glbOff=true; };
+    document.head.appendChild(sc);
+  }
+
+  /* Si existe koa.riv junto a la app (versión publicada), úsalo automáticamente. Si no, no pasa nada. */
+  function tryRive(cont){
+    if(window.__rivOff || window.__rivOn) return;
+    try{
+      fetch("koa.riv",{method:"HEAD"}).then(function(r){
+        if(!r.ok){ window.__rivOff=true; return; }
+        var s=document.createElement("script"); s.src="https://unpkg.com/@rive-app/canvas@2.21.6";
+        s.onload=function(){
+          try{
+            if(!window.rive){ window.__rivOff=true; return; }
+            var cv=document.createElement("canvas"); cv.width=620; cv.height=760; cv.style.maxWidth="86%"; cv.style.maxHeight="92%";
+            new window.rive.Rive({ src:"koa.riv", canvas:cv, autoplay:true,
+              layout:new window.rive.Layout({fit:window.rive.Fit.Contain}),
+              onLoad:function(){ cont.innerHTML=""; cont.appendChild(cv); window.__rivOn=true; if(petTimer){clearInterval(petTimer);petTimer=null;} },
+              onLoadError:function(){ window.__rivOff=true; } });
+          }catch(e){ window.__rivOff=true; }
+        };
+        s.onerror=function(){ window.__rivOff=true; };
+        document.head.appendChild(s);
+      }).catch(function(){ window.__rivOff=true; });
+    }catch(e){ window.__rivOff=true; }
+  }
+
+  /* --- texturas para sprites 3D --- */
+  function petCanvas(s){ var c=document.createElement("canvas"); c.width=c.height=s; return c; }
+  function texGlow(){ var c=petCanvas(128),x=c.getContext("2d"); var g=x.createRadialGradient(64,64,6,64,64,64); g.addColorStop(0,"rgba(255,246,200,.95)"); g.addColorStop(.5,"rgba(255,216,107,.45)"); g.addColorStop(1,"rgba(255,216,107,0)"); x.fillStyle=g; x.fillRect(0,0,128,128); return new THREE.CanvasTexture(c); }
+  function texHeart(color){ var c=petCanvas(128),x=c.getContext("2d"); x.fillStyle=color; var cx=64,cy=54,w=44; x.beginPath(); x.moveTo(cx,cy+36); x.bezierCurveTo(cx-w,cy+4,cx-w*0.55,cy-32,cx,cy-6); x.bezierCurveTo(cx+w*0.55,cy-32,cx+w,cy+4,cx,cy+36); x.closePath(); x.fill(); return new THREE.CanvasTexture(c); }
+  function texEmpty(){ var c=petCanvas(128),x=c.getContext("2d"); x.strokeStyle="#8a8576"; x.lineWidth=4; x.setLineDash([8,8]); x.beginPath(); x.ellipse(64,64,52,38,0,0,Math.PI*2); x.stroke(); x.setLineDash([]); x.fillStyle="#8a8576"; x.textAlign="center"; x.font="bold 50px sans-serif"; x.fillText("…",64,80); return new THREE.CanvasTexture(c); }
+  function texBags(){ var c=petCanvas(128),x=c.getContext("2d"); x.strokeStyle="#6b4a8a"; x.lineWidth=6; x.lineCap="round"; x.beginPath(); x.arc(40,52,18,0.25,Math.PI-0.25); x.stroke(); x.beginPath(); x.arc(88,52,18,0.25,Math.PI-0.25); x.stroke(); return new THREE.CanvasTexture(c); }
+  function texBubbles(){ var c=petCanvas(128),x=c.getContext("2d"); x.fillStyle="#bfe0ff"; var b=[[60,82,14],[90,54,10],[46,42,8]]; for(var i=0;i<b.length;i++){ x.beginPath(); x.arc(b[i][0],b[i][1],b[i][2],0,Math.PI*2); x.fill(); } return new THREE.CanvasTexture(c); }
+
+  /* --- motor 3D de Koa (three.js) --- */
+  function initPet3D(container){
+    var W=container.clientWidth||280, H=container.clientHeight||320;
+    var scene=new THREE.Scene();
+    var camera=new THREE.PerspectiveCamera(42, W/H, 0.1, 100);
+    camera.position.set(0,-0.05,6.7); camera.lookAt(0,-0.1,0);
+    var renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(W,H);
+    container.appendChild(renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff,0.72));
+    var key=new THREE.DirectionalLight(0xffffff,0.95); key.position.set(-3,4,5); scene.add(key);
+    var fill=new THREE.DirectionalLight(0xcfe0ff,0.32); fill.position.set(4,-1,3); scene.add(fill);
+    var rim=new THREE.DirectionalLight(0xffe6b0,0.42); rim.position.set(2,3,-4); scene.add(rim);
+
+    var g=new THREE.Group(); scene.add(g);
+    var BODY=0xa85a36, BELLY=0xe9c9a0, DARK=0x6e3a22;
+    var bodyMat=new THREE.MeshStandardMaterial({color:BODY,roughness:0.72,metalness:0});
+    var bellyMat=new THREE.MeshStandardMaterial({color:BELLY,roughness:0.82});
+    var earInMat=new THREE.MeshStandardMaterial({color:0xc98f55,roughness:0.85});
+    function sph(r){ return new THREE.SphereGeometry(r,28,28); }
+    function mesh(geo,mat,x,y,z){ var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); g.add(m); return m; }
+
+    var body=mesh(sph(1.15),bodyMat,0,-0.1,0); body.scale.set(0.95,1.25,0.95);
+    var belly=mesh(sph(0.82),bellyMat,0,-0.32,0.6); belly.scale.set(0.82,1.0,0.45);
+    function ear(side){ var e=mesh(sph(0.4),bodyMat,side*0.82,1.12,-0.05); e.scale.set(0.36,0.6,0.22); var ei=mesh(sph(0.4),earInMat,side*0.8,1.08,0.05); ei.scale.set(0.2,0.4,0.16); }
+    ear(-1); ear(1);
+    mesh(sph(0.18),new THREE.MeshStandardMaterial({color:DARK,roughness:0.85}),0,1.22,0.18).scale.set(1.3,0.8,0.8);
+    var armL=mesh(sph(0.34),bodyMat,-1.02,-0.32,0.32); armL.scale.set(0.55,0.95,0.55); armL.rotation.z=0.5;
+    var armR=mesh(sph(0.34),bodyMat,1.02,-0.32,0.32); armR.scale.set(0.55,0.95,0.55); armR.rotation.z=-0.5;
+    mesh(sph(0.34),bodyMat,-0.45,-1.5,0.45).scale.set(1,0.6,1.25);
+    mesh(sph(0.34),bodyMat,0.45,-1.5,0.45).scale.set(1,0.6,1.25);
+    mesh(sph(0.66),bellyMat,0,-0.04,0.78).scale.set(1.08,0.9,0.72);
+
+    var eyeWhiteMat=new THREE.MeshPhongMaterial({color:0xffffff,shininess:90,specular:0x666666});
+    var irisMat=new THREE.MeshStandardMaterial({color:0x55b77c,roughness:0.38});
+    var pupilMat=new THREE.MeshPhongMaterial({color:0x140d10,shininess:120,specular:0x888888});
+    var hiMat=new THREE.MeshBasicMaterial({color:0xffffff});
+    function eye(side){ var grp=new THREE.Group(); g.add(grp);
+      var w=new THREE.Mesh(sph(0.37),eyeWhiteMat); w.scale.set(1,1.14,0.7); grp.add(w);
+      grp.add(posm(new THREE.Mesh(sph(0.2),irisMat),side*0.02,-0.02,0.28));
+      grp.add(posm(new THREE.Mesh(sph(0.12),pupilMat),side*0.02,-0.02,0.37));
+      grp.add(posm(new THREE.Mesh(sph(0.06),hiMat),side*0.02+0.08,0.1,0.42));
+      grp.position.set(side*0.43,0.4,0.92); grp._open=1; return grp; }
+    function posm(m,x,y,z){ m.position.set(x,y,z); return m; }
+    var eyeL=eye(-1), eyeR=eye(1);
+    mesh(sph(0.2),new THREE.MeshPhongMaterial({color:0x271919,shininess:120,specular:0x888888}),0,0.1,1.16).scale.set(1.3,1.05,1.0);
+    var cheekMat=new THREE.MeshBasicMaterial({color:0xff8f7a,transparent:true,opacity:0.45,depthWrite:false});
+    mesh(sph(0.2),cheekMat,-0.6,0.02,0.95).scale.set(1,0.7,0.4);
+    mesh(sph(0.2),cheekMat,0.6,0.02,0.95).scale.set(1,0.7,0.4);
+    var browMat=new THREE.MeshStandardMaterial({color:0x4a2a18,roughness:0.9});
+    var browL=mesh(new THREE.BoxGeometry(0.34,0.08,0.1),browMat,-0.42,0.74,1.0); browL.rotation.z=-0.35; browL.visible=false;
+    var browR=mesh(new THREE.BoxGeometry(0.34,0.08,0.1),browMat,0.42,0.74,1.0); browR.rotation.z=0.35; browR.visible=false;
+
+    var mouthMat=new THREE.MeshBasicMaterial({color:0x2e2020});
+    function arc(){ return new THREE.TorusGeometry(0.26,0.045,8,22,Math.PI); }
+    var mHappy=mesh(arc(),mouthMat,0,-0.18,1.04); mHappy.rotation.z=Math.PI;
+    var mAngry=mesh(arc(),mouthMat,0,-0.1,1.04);
+    var mTired=mesh(new THREE.BoxGeometry(0.34,0.05,0.05),mouthMat,0,-0.18,1.05);
+    var mGasp=mesh(sph(0.13),new THREE.MeshStandardMaterial({color:0x3a2020,roughness:0.6}),0,-0.18,1.0); mGasp.scale.set(0.8,1,0.6);
+    var tongue=mesh(sph(0.1),new THREE.MeshStandardMaterial({color:0xd9607a,roughness:0.6}),0,-0.26,1.1); tongue.scale.set(1.1,0.7,0.6);
+
+    function spr(tex,scale,x,y,z,add){ var mt=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}); if(add)mt.blending=THREE.AdditiveBlending; var s=new THREE.Sprite(mt); s.scale.set(scale,scale,1); s.position.set(x,y,z); g.add(s); return s; }
+    var heartPink=texHeart("#e8537a"), heartGray=texHeart("#9a9a9a");
+    var aura=spr(texGlow(),5.4,0,0.1,-1.3,true);
+    var heart=spr(heartPink,0.62,0,-0.5,1.12);
+    var empty=spr(texEmpty(),1.15,0,2.0,0.4); empty.visible=false;
+    var bags=spr(texBags(),1.05,0,0.2,1.2); bags.visible=false;
+    var bubbles=spr(texBubbles(),0.85,0.55,0.7,1.1); bubbles.visible=false;
+
+    var t0=Date.now(), raf=null, eyeOpen=1;
+    var bounceT=0, ouchT=0, hopT=0, blinkUntil=0, nextBlink=Date.now()+1800;
+    function animate(){
+      raf=requestAnimationFrame(animate);
+      var now=Date.now(), t=(now-t0)/1000;
+      g.position.set(0, Math.sin(t*1.6)*0.05, 0); g.rotation.set(0, Math.sin(t*0.7)*0.18, 0); g.scale.set(1,1,1);
+      body.scale.y = 1.25*(1+Math.sin(t*1.6)*0.012);
+      if(bounceT>0){ var p=bounceT/0.6; g.position.y+=Math.sin((1-p)*Math.PI)*0.5; g.scale.set(1+0.06*p,1-0.05*p,1+0.06*p); bounceT-=0.016; if(bounceT<0)bounceT=0; }
+      if(ouchT>0){ g.rotation.z=Math.sin(ouchT*42)*0.13*(ouchT/0.5); ouchT-=0.016; if(ouchT<0)ouchT=0; }
+      if(hopT>0){ var hp=hopT/1.2; g.position.y+=Math.abs(Math.sin((1-hp)*Math.PI*2))*0.45; g.rotation.y+=(1-hp)*0.7; hopT-=0.016; if(hopT<0)hopT=0; }
+      if(now>nextBlink && now>blinkUntil){ blinkUntil=now+130; nextBlink=now+2000+Math.random()*2600; }
+      var ey=(now<blinkUntil)?0.08:eyeOpen; eyeL.scale.y=ey; eyeR.scale.y=ey;
+      aura.material.rotation+=0.003;
+      renderer.render(scene,camera);
+    }
+    function setState(st){
+      var sx=st.ejercicio?0.9:1.32; body.scale.set(sx,1.25,sx);
+      belly.scale.set(0.82*(st.ejercicio?0.95:1.22),1.0,0.45);
+      aura.visible=!!st.oracion;
+      heart.material.map=st.familia?heartPink:heartGray; heart.material.needsUpdate=true;
+      empty.visible=!st.lectura;
+      var mood=!st.respiracion?"gasp":(!st.meditacion?"angry":(!st.dormir?"tired":"happy"));
+      mHappy.visible=tongue.visible=(mood==="happy"); mAngry.visible=(mood==="angry"); mTired.visible=(mood==="tired"); mGasp.visible=(mood==="gasp");
+      browL.visible=browR.visible=(mood==="angry"); bags.visible=(mood==="tired"); bubbles.visible=(mood==="gasp");
+      eyeOpen=(mood==="tired")?0.45:1;
+      bodyMat.color.setHex(mood==="gasp"?0x8a5cc9:BODY);
+      bellyMat.color.setHex(mood==="gasp"?0xb79be8:BELLY);
+    }
+    function resize(){ var w=container.clientWidth||W,h=container.clientHeight||H; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); }
+    animate();
+    return { setState:setState, bounce:function(){bounceT=0.6;}, ouch:function(){ouchT=0.5;}, hop:function(){hopT=1.2;}, resize:resize,
+      dispose:function(){ if(raf)cancelAnimationFrame(raf); try{renderer.dispose();}catch(e){} if(renderer.domElement&&renderer.domElement.parentNode)renderer.domElement.parentNode.removeChild(renderer.domElement); } };
+  }
+
+  /* ===================== CRECER (herramientas de libros) ===================== */
+  function persistGrowth(){ persist("eq:growth",growth); }
+  function findBook(id){ for(var i=0;i<growth.books.length;i++) if(growth.books[i].id===id) return growth.books[i]; return null; }
+  var GMODS=[["habitos","Hábitos"],["mente","Mente"],["flex","Flexibilidad"],["proposito","Propósito"],["disciplina","Disciplina"],["relaciones","Relaciones"],["biblioteca","Biblioteca"],["ritual","Ritual"]];
+  function viewCrecer(){
+    var seg=""; for(var i=0;i<GMODS.length;i++) seg+='<button data-gm="'+GMODS[i][0]+'" class="'+(curGrowth===GMODS[i][0]?'on':'')+'">'+GMODS[i][1]+'</button>';
+    var body;
+    if(curGrowth==="mente")body=growthMente(); else if(curGrowth==="flex")body=growthFlex();
+    else if(curGrowth==="proposito")body=growthProposito(); else if(curGrowth==="disciplina")body=growthDisciplina();
+    else if(curGrowth==="relaciones")body=growthRelaciones(); else if(curGrowth==="biblioteca")body=growthBiblioteca();
+    else if(curGrowth==="ritual")body=growthRitual(); else body=growthHabitos();
+    return '<div class="seg" style="margin-bottom:14px">'+seg+'</div>'+body;
+  }
+
+  function growthHabitos(){
+    var idH=""; if(growth.identity.length){ for(var i=0;i<growth.identity.length;i++){ var it=growth.identity[i]; idH+='<div class="item-line"><span class="e">🌟</span><span class="n">'+esc(it.text)+'</span><button class="del" data-delid="'+it.id+'">🗑️</button></div>'; } } else idH='<div class="empty">Aún no defines tu identidad.</div>';
+    var stH=""; if(growth.stacks.length){ for(var s=0;s<growth.stacks.length;s++){ var st=growth.stacks[s]; stH+='<div class="item-line"><span class="e">🔗</span><span class="n">Después de <b>'+esc(st.after)+'</b>, haré <b>'+esc(st.then)+'</b></span><button class="del" data-delstack="'+st.id+'">🗑️</button></div>'; } } else stH='<div class="empty">Aún no apilas hábitos.</div>';
+    return '<div class="card"><h2>Tu identidad</h2><div class="sub">No persigas una meta, conviértete en la persona. Cada hábito es un voto para el tipo de persona que quieres ser.</div>'+idH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="idText" placeholder="Soy alguien que…"></div>'+
+      '<button class="btn btn-ghost" id="addId" style="margin-top:10px">+ Agregar identidad</button></div>'+
+      '<div class="card"><h2>Apila tus hábitos</h2><div class="sub">Engancha un hábito nuevo a uno que ya haces. La rutina vieja se vuelve el recordatorio de la nueva.</div>'+stH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="stAfter" placeholder="Después de… (hábito actual)"></div>'+
+      '<div class="addbar"><input type="text" id="stThen" placeholder="…haré (hábito nuevo)"></div>'+
+      '<button class="btn btn-ghost" id="addStack" style="margin-top:10px">+ Apilar</button></div>'+
+      '<div class="card"><div class="sec-label">Dos recordatorios</div>'+
+      '<div class="small-note" style="font-size:13px;line-height:1.5"><b>Regla de los 2 minutos:</b> empieza tan pequeño que sea imposible decir que no. "Leer" = abrir el libro y leer una página.<br><br><b>Nunca falles dos veces:</b> saltarte un día pasa; saltarte dos empieza un mal hábito. Si fallas, vuelve al día siguiente sin culpa.</div></div>';
+  }
+
+  function growthMente(){
+    var pH=""; if(growth.patterns.length){ for(var i=growth.patterns.length-1;i>=0 && i>growth.patterns.length-6;i--){ var p=growth.patterns[i]; pH+='<div class="item-line"><span class="e">🔄</span><span class="n"><b>'+esc(p.emo)+'</b> → elijo <b>'+esc(p.choice)+'</b><span class="r" style="display:block">'+p.date+'</span></span><button class="del" data-delpat="'+p.id+'">🗑️</button></div>'; } } else pH='<div class="empty">Sin registros todavía.</div>';
+    return '<div class="card"><h2>Tu yo del futuro</h2><div class="sub">Describe a la persona en la que te estás convirtiendo. Léelo cada mañana: tu mente no distingue bien entre vivirlo e imaginarlo con emoción.</div>'+
+      '<textarea id="futureSelf" placeholder="Soy una persona sana, presente con mi familia, en paz…" style="min-height:90px">'+esc(growth.futureSelf||"")+'</textarea>'+
+      '<div class="saved" id="fsSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>Ensayo mental guiado</h2><div class="sub">Un par de minutos para relajarte e imaginar tu día ideal, sintiéndolo como si ya hubiera pasado. Suma a tus minutos de meditación.</div>'+
+      '<button class="btn btn-mente" id="startRehearse">🧠 Iniciar ensayo (≈2 min)</button></div>'+
+      '<div class="card"><h2>Cambia el patrón</h2><div class="sub">Identifica la emoción que te dominó y elige conscientemente una respuesta distinta. Repetirlo reescribe el hábito emocional.</div>'+pH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="patEmo" placeholder="Emoción que me dominó"></div>'+
+      '<div class="addbar"><input type="text" id="patChoice" placeholder="Nueva respuesta que elijo"></div>'+
+      '<button class="btn btn-ghost" id="addPat" style="margin-top:10px">+ Registrar</button></div>';
+  }
+
+  function growthFlex(){
+    var rH=""; if(growth.reframes.length){ for(var i=growth.reframes.length-1;i>=0 && i>growth.reframes.length-6;i--){ var r=growth.reframes[i]; rH+='<div class="item-line" style="align-items:flex-start"><span class="e">🪶</span><span class="n"><b>Rígido:</b> '+esc(r.rigid)+'<br><b>Flexible:</b> '+esc(r.flex)+'<span class="r" style="display:block">'+r.date+'</span></span><button class="del" data-delref="'+r.id+'">🗑️</button></div>'; } } else rH='<div class="empty">Sin reencuadres todavía.</div>';
+    return '<div class="card"><h2>Reencuadre flexible</h2><div class="sub">Una mente rígida sufre; una flexible se adapta. Toma un pensamiento absoluto ("siempre", "nunca", "debería") y ábrelo a otra posibilidad.</div>'+
+      '<label class="fld">Pensamiento rígido</label><input type="text" id="rfRigid" placeholder="Ej: Si no lo hago perfecto, fracasé">'+
+      '<label class="fld" style="margin-top:10px">¿Por qué es rígido? (opcional)</label><input type="text" id="rfWhy" placeholder="Es un absoluto, no admite matices">'+
+      '<label class="fld" style="margin-top:10px">Versión flexible</label><input type="text" id="rfFlex" placeholder="Ej: Hacerlo bien ya es valioso; puedo mejorar después">'+
+      '<button class="btn btn-ghost" id="addRef" style="margin-top:12px">+ Guardar reencuadre</button></div>'+
+      '<div class="card"><div class="sec-label">Tus reencuadres</div>'+rH+'</div>'+
+      '<div class="card"><div class="sec-label">Autoobservación</div><div class="small-note" style="font-size:13px;line-height:1.5">Antes de reaccionar, obsérvate un segundo: ¿esto es un hecho o una interpretación mía? Esa pausa es el inicio de la flexibilidad.</div></div>';
+  }
+
+  /* --- Una vida con propósito --- */
+  function growthProposito(){
+    var vH=""; if(growth.values.length){ for(var i=0;i<growth.values.length;i++){ var v=growth.values[i]; vH+='<div class="item-line"><span class="e">🧭</span><span class="n">'+esc(v.text)+'</span><button class="del" data-delval="'+v.id+'">🗑️</button></div>'; } } else vH='<div class="empty">Aún no defines tus valores.</div>';
+    var marcas=growth.reto.marcas||[]; var done=0; var grid='';
+    for(var c=0;c<40;c++){ var on=!!marcas[c]; if(on)done++; grid+='<button class="cell40'+(on?' on':'')+'" data-cell="'+c+'">'+(c+1)+'</button>'; }
+    var inten=esc(getDay(todayKey()).intencion||"");
+    return '<div class="card"><h2>Tu propósito</h2><div class="sub">No empieza en ti: descubrir para qué estás aquí da sentido a todo lo demás. Escríbelo y vuelve a leerlo seguido.</div>'+
+      '<textarea id="purposeText" placeholder="Estoy aquí para…" style="min-height:80px">'+esc(growth.purpose||"")+'</textarea><div class="saved" id="purpSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>Tus valores</h2><div class="sub">Lo que de verdad importa y guía tus decisiones.</div>'+vH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="valText" placeholder="Ej: Familia, fe, honestidad…"></div>'+
+      '<button class="btn btn-ghost" id="addValue" style="margin-top:10px">+ Agregar valor</button></div>'+
+      '<div class="card"><h2>Intención de hoy</h2><div class="sub">Una frase para enfocar el día con propósito.</div>'+
+      '<input type="text" id="intencion" placeholder="Hoy elijo…" value="'+inten+'"><div class="saved" id="intSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>Reto de 40 días</h2><div class="sub">Un compromiso a 40 días transforma. Define la meta y marca cada día que la cumplas.</div>'+
+      '<input type="text" id="retoMeta" placeholder="Mi compromiso de 40 días" value="'+esc(growth.reto.meta||"")+'">'+
+      '<div class="lvlbar" style="margin-top:12px"><i style="width:'+(done/40*100)+'%"></i></div><div class="small-note">'+done+' / 40 días</div>'+
+      '<div class="grid40">'+grid+'</div></div>';
+  }
+
+  /* --- Vendes o vendes (disciplina) --- */
+  function powerStreak(){ if(!growth.power.length)return 0; var s=0; for(var i=0;i<60;i++){ var d=days[offsetKey(-i)]; if(!d||!d.power){ if(i===0)continue; break; } var all=true; for(var p=0;p<growth.power.length;p++){ if(!d.power[growth.power[p].id]){all=false;break;} } if(all)s++; else { if(i===0)continue; break; } } return s; }
+  function growthDisciplina(){
+    var d=getDay(todayKey()); if(!d.power)d.power={};
+    var pwH=""; if(growth.power.length){ for(var i=0;i<growth.power.length;i++){ var it=growth.power[i]; var on=!!d.power[it.id]; pwH+='<div class="med"><div class="check'+(on?' on':'')+'" data-pw="'+it.id+'">'+(on?'✓':'')+'</div><div class="info"><div class="n">'+esc(it.text)+'</div></div><button class="del" data-delpower="'+it.id+'">🗑️</button></div>'; } } else pwH='<div class="empty">Arma tu lista de poder: lo innegociable de cada día.</div>';
+    var afH=""; if(growth.afirmaciones.length){ for(var a=0;a<growth.afirmaciones.length;a++){ var af=growth.afirmaciones[a]; afH+='<div class="item-line"><span class="e">💬</span><span class="n">'+esc(af.text)+'</span><button class="del" data-delafir="'+af.id+'">🗑️</button></div>'; } } else afH='<div class="empty">Sin afirmaciones todavía.</div>';
+    return '<div class="card"><h2>Tu meta grande</h2><div class="sub">Piensa en grande y sin excusas: ponte un objetivo que te exija crecer.</div>'+
+      '<textarea id="metaGrande" placeholder="Mi gran meta es…" style="min-height:70px">'+esc(growth.metaGrande||"")+'</textarea><div class="saved" id="mgSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>Lista de poder de hoy</h2><div class="sub">Lo innegociable que haces sí o sí cada día. Racha de días completos: <b>'+powerStreak()+'</b> 🔥</div>'+pwH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="pwText" placeholder="Acción innegociable del día"></div>'+
+      '<button class="btn btn-ghost" id="addPower" style="margin-top:10px">+ Agregar a la lista</button></div>'+
+      '<div class="card"><h2>Afirmaciones</h2><div class="sub">Repítelas en voz alta cada mañana, con convicción.</div>'+afH+
+      '<div class="addbar" style="margin-top:10px"><input type="text" id="afText" placeholder="Ej: Soy disciplinado y constante"></div>'+
+      '<button class="btn btn-ghost" id="addAfir" style="margin-top:10px">+ Agregar afirmación</button></div>';
+  }
+
+  /* --- Cómo ganar amigos (relaciones) --- */
+  function growthRelaciones(){
+    var peH=""; if(growth.people.length){ for(var i=0;i<growth.people.length;i++){ var p=growth.people[i]; peH+='<div class="item-line" style="align-items:flex-start"><span class="e">🙂</span><span class="n"><b>'+esc(p.name)+'</b>'+(p.note?'<span class="r" style="display:block">'+esc(p.note)+'</span>':'')+'</span><button class="del" data-delperson="'+p.id+'">🗑️</button></div>'; } } else peH='<div class="empty">Agrega personas importantes y lo que les importa.</div>';
+    var apH=""; if(growth.aprecios.length){ for(var a=growth.aprecios.length-1;a>=0 && a>growth.aprecios.length-7;a--){ var ap=growth.aprecios[a]; apH+='<div class="item-line"><span class="e">💛</span><span class="n"><b>'+esc(ap.person)+'</b>: '+esc(ap.action)+'<span class="r" style="display:block">'+ap.date+'</span></span><button class="del" data-delapr="'+ap.id+'">🗑️</button></div>'; } } else apH='<div class="empty">Sin gestos registrados aún.</div>';
+    return '<div class="card"><h2>Personas importantes</h2><div class="sub">Interésate de verdad por los demás y recuerda los detalles que a ellos les importan.</div>'+peH+
+      '<div class="addbar" style="margin-top:10px"><input class="t" type="text" id="peName" placeholder="Nombre"></div>'+
+      '<div class="addbar"><input type="text" id="peNote" placeholder="Detalle que le importa (hijos, gustos, fecha…)"></div>'+
+      '<button class="btn btn-ghost" id="addPerson" style="margin-top:10px">+ Agregar persona</button></div>'+
+      '<div class="card"><h2>Gesto de aprecio del día</h2><div class="sub">Un elogio sincero, un agradecimiento o un mensaje. Hacer sentir importante al otro, de verdad.</div>'+apH+
+      '<div class="addbar" style="margin-top:10px"><input class="t" type="text" id="apPerson" placeholder="¿A quién?"></div>'+
+      '<div class="addbar"><input type="text" id="apAction" placeholder="¿Qué gesto tuviste?"></div>'+
+      '<button class="btn btn-ghost" id="addAprecio" style="margin-top:10px">+ Registrar gesto</button></div>'+
+      '<div class="card"><div class="sec-label">Recordatorio</div><div class="small-note" style="font-size:13px;line-height:1.5">Recuerda su nombre, escucha más de lo que hablas, y haz sentir importante a la otra persona — siempre con sinceridad. Nadie discute con quien lo hace sentir valorado.</div></div>';
+  }
+
+  /* --- Biblioteca de lectura --- */
+  function readingStreak(){ var s=0; for(var i=0;i<120;i++){ var d=days[offsetKey(-i)]; if(d&&d.lectura)s++; else { if(i===0)continue; break; } } return s; }
+  function allNotes(){ var out=[]; for(var i=0;i<growth.books.length;i++){ var bk=growth.books[i]; for(var j=0;j<bk.notes.length;j++) out.push({book:bk.title,text:bk.notes[j].text}); } return out; }
+  function growthBiblioteca(){
+    var notes=allNotes(); var idea="";
+    if(notes.length){ var seed=parseInt(offsetKey(0).replace(/-/g,""),10)%notes.length; var n=notes[seed]; idea='<div class="card" style="background:linear-gradient(135deg,#fff7e8,#fdeccf);border:1px solid #f0d9a8"><div class="sec-label">💡 Idea del día</div><div style="font-family:\'Fraunces\',serif;font-size:16px;line-height:1.5">'+esc(n.text)+'</div><div class="small-note">— '+esc(n.book)+'</div></div>'; }
+    else idea='<div class="card"><div class="sec-label">💡 Idea del día</div><div class="empty">Guarda tus subrayados en cada libro y aquí verás uno distinto cada día.</div></div>';
+    var booksH="";
+    for(var i=0;i<growth.books.length;i++){ var bk=growth.books[i];
+      var pct = bk.pages>0 ? Math.min(100,Math.round(bk.current/bk.pages*100)) : 0;
+      var noH=""; if(bk.notes.length){ for(var j=0;j<bk.notes.length;j++){ var nt=bk.notes[j]; noH+='<div class="item-line" style="align-items:flex-start"><span class="e">✍️</span><span class="n">'+esc(nt.text)+'</span><button class="del" data-tohoy="'+esc(nt.text).replace(/"/g,"&quot;")+'" title="Usar como intención de hoy">📌</button><button class="del" data-delnote="'+bk.id+"|"+nt.id+'">🗑️</button></div>'; } }
+      booksH+='<div class="card" style="border-left:4px solid '+(bk.done?'var(--salud)':'var(--cuerpo)')+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><b style="font-size:16px">'+esc(bk.title)+'</b><div class="sub" style="margin:2px 0 0">'+esc(bk.author||"")+(bk.done?' · ✅ terminado':'')+'</div></div><button class="del" data-delbook="'+bk.id+'">🗑️</button></div>'+
+        '<div class="lvlbar" style="margin-top:10px"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="small-note">'+(bk.pages>0?(bk.current+' / '+bk.pages+' págs · '+pct+'%'):'Sin total de páginas')+'</div>'+
+        '<div class="addbar" style="margin-top:8px"><input class="t" type="number" id="bp_'+bk.id+'" placeholder="pág. actual" value="'+(bk.current||"")+'"><input class="t" type="number" id="bt_'+bk.id+'" placeholder="total" value="'+(bk.pages||"")+'"><button class="mini" data-updbook="'+bk.id+'">Guardar</button></div>'+
+        noH+
+        '<div class="addbar" style="margin-top:8px"><input type="text" id="ni_'+bk.id+'" placeholder="Subrayado / idea con tus palabras"></div>'+
+        '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost" data-addnote="'+bk.id+'" style="flex:1">+ Subrayado</button><button class="mini" data-donebook="'+bk.id+'">'+(bk.done?'Reabrir':'Terminado')+'</button></div>'+
+        '</div>';
+    }
+    return '<div class="card"><h2>Tu biblioteca</h2><div class="sub">Lleva tu avance, guarda tus ideas con tus palabras y convierte la lectura en acción. Racha de lectura: <b>'+readingStreak()+'</b> días 🔥</div></div>'+
+      idea+booksH+
+      '<div class="card"><div class="sec-label">Agregar libro</div>'+
+      '<div class="addbar"><input type="text" id="nbTitle" placeholder="Título"></div>'+
+      '<div class="addbar"><input class="t" type="text" id="nbAuthor" placeholder="Autor"><input class="t" type="number" id="nbPages" placeholder="Págs"></div>'+
+      '<button class="btn btn-ghost" id="addBook" style="margin-top:10px">+ Agregar libro</button></div>';
+  }
+
+  /* --- Ritual: mañana / noche / revisión semanal --- */
+  function growthRitual(){
+    var d=getDay(todayKey()); var gr=d.gratitudes||[]; var pri=d.prioridades||[]; var w=growth.weekly||{};
+    return '<div class="card"><h2>☀️ Mañana</h2><div class="sub">Arranca con claridad. Define para qué es hoy y qué lo haría un buen día.</div>'+
+      '<label class="fld">Intención de hoy</label><input type="text" id="rIntencion" placeholder="Hoy elijo…" value="'+esc(d.intencion||"")+'">'+
+      '<label class="fld" style="margin-top:12px">3 prioridades</label>'+
+      '<div class="addbar"><input type="text" id="pri0" placeholder="1" value="'+esc(pri[0]||"")+'"></div>'+
+      '<div class="addbar"><input type="text" id="pri1" placeholder="2" value="'+esc(pri[1]||"")+'"></div>'+
+      '<div class="addbar"><input type="text" id="pri2" placeholder="3" value="'+esc(pri[2]||"")+'"></div>'+
+      '<div class="saved" id="manSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>🌙 Noche</h2><div class="sub">Cierra el día con gratitud. Tres cosas, por pequeñas que sean.</div>'+
+      '<label class="fld">3 gratitudes</label>'+
+      '<div class="addbar"><input type="text" id="gr0" placeholder="Hoy agradezco…" value="'+esc(gr[0]||"")+'"></div>'+
+      '<div class="addbar"><input type="text" id="gr1" placeholder="También…" value="'+esc(gr[1]||"")+'"></div>'+
+      '<div class="addbar"><input type="text" id="gr2" placeholder="Y…" value="'+esc(gr[2]||"")+'"></div>'+
+      '<label class="fld" style="margin-top:12px">¿Cómo estuvo tu día?</label>'+
+      '<textarea id="rNota" placeholder="Algo que quieras recordar…">'+esc(d.nota||"")+'</textarea>'+
+      '<div class="saved" id="nocheSaved">✓ Guardado</div></div>'+
+      '<div class="card"><h2>📆 Revisión semanal</h2><div class="sub">Un alto cada semana para aprender y reenfocar.'+(w.date?' Última: '+w.date:'')+'</div>'+
+      '<label class="fld">¿Qué funcionó esta semana?</label><textarea id="wWin" placeholder="Lo que salió bien…">'+esc(w.win||"")+'</textarea>'+
+      '<label class="fld" style="margin-top:10px">¿Qué quiero ajustar?</label><textarea id="wAdj" placeholder="Lo que cambiaría…">'+esc(w.adjust||"")+'</textarea>'+
+      '<label class="fld" style="margin-top:10px">Mi foco para la próxima semana</label><textarea id="wFocus" placeholder="Una sola cosa importante…">'+esc(w.focus||"")+'</textarea>'+
+      '<div class="saved" id="wkSaved">✓ Guardado</div></div>';
+  }
+
+  /* ===================== BALANCE ===================== */
+  function viewBalance(){
+    var d=getDay(todayKey());
+    var mente=sumMente(d), cuerpo=(d.deporte||0), familia=sumFamilia(d);
+    var medTotal=meds.length,medDone=0; for(var i=0;i<meds.length;i++){ if(d.meds[meds[i].id])medDone++; }
+    var h="";
+    h+='<div class="kpis">'+
+      kpi(mente+'<small> min</small>',"Mente & espíritu","var(--mente)")+
+      kpi(cuerpo+'<small> min</small>',"Cuerpo (deporte)","var(--cuerpo)")+
+      kpi(familia+'<small> min</small>',"Familia hoy","var(--familia)")+
+      kpi((d.animo!=null?MOODS[d.animo-1].e:"—"),"Ánimo de hoy","var(--emo)")+'</div>';
+
+    // Resumen semanal automático
+    h+=weeklySummaryCard();
+
+    // Espejo IA
+    h+='<div class="ai-card"><h2>🪞 Espejo</h2>'+
+      '<div class="sub">Una mirada reflexiva a tus datos: patrones, fortalezas y lo que podrías estar descuidando. No es un diagnóstico ni reemplaza a un profesional.</div>'+
+      '<button class="btn btn-ai" id="aiBtn">Analizar mis últimos datos</button>'+
+      '<div id="aiOut"></div>'+
+      '<div class="ai-disc">El Espejo observa tendencias y te acompaña con sugerencias suaves. Si atraviesas un malestar fuerte o sostenido, hablar con un profesional de salud mental o con alguien de confianza es lo más valioso que puedes hacer por ti.</div></div>';
+
+    // Constancia
+    var st=streaks7();
+    h+='<div class="card"><div class="sec-label">Constancia · últimos 7 días</div><div class="streaks">'+
+      streakBox("📖","Mente",st.mente)+streakBox("💪","Cuerpo",st.cuerpo)+streakBox("❤️","Familia",st.familia)+streakBox("🌬️","Respira",st.respira)+streakBox("💊","Medic.",st.med)+
+      '</div><div class="small-note" style="margin-top:14px">Cada número es cuántos de los últimos 7 días tocaste ese pilar. La meta no es maximizar uno, sino no dejar ninguno en cero.</div></div>';
+
+    // Radar
+    h+='<div class="card"><div class="sec-label">Equilibrio de hoy</div><div id="radar" class="chart" style="height:280px"></div>'+
+      '<div class="small-note">Cada eje se mide contra tu meta diaria (configurable en ⚙️ Más). Un día equilibrado llena el círculo de forma pareja.</div></div>';
+
+    var q=REFLEX[(new Date()).getDate()%REFLEX.length];
+    h+='<div class="reflect"><div class="sec-label">Reflexión de hoy</div><div class="q">"'+q+'"</div></div>';
+    return h;
+  }
+  function kpi(v,k,c){ return '<div class="kpi"><div class="v" style="color:'+c+'">'+v+'</div><div class="k">'+k+'</div><span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:'+c+'"></span></div>'; }
+  function streakBox(e,l,n){ return '<div class="streak"><div class="e">'+e+'</div><div class="n">'+n+'<small style="color:var(--muted);font-size:11px">/7</small></div><div class="l">'+l+'</div></div>'; }
+  function sumMente(d){ return (d.lectura||0)+(d.meditacion||0)+(d.oracion||0)+(d.respiracion||0); }
+  function sumFamilia(d){ var s=0; for(var k in d.familia) s+=d.familia[k]||0; return s; }
+
+  function weekTotals(off0){
+    var t={mente:0,cuerpo:0,familia:0,respira:0,moodSum:0,moodN:0,medT:0,medD:0,emo:{}};
+    for(var i=0;i<7;i++){ var d=days[offsetKey(-(i+off0))]; if(!d)continue;
+      t.mente+=(d.lectura||0)+(d.meditacion||0)+(d.oracion||0)+(d.respiracion||0);
+      t.cuerpo+=(d.deporte||0); t.respira+=(d.respiracion||0);
+      var fs=0; for(var k in (d.familia||{})) fs+=d.familia[k]||0; t.familia+=fs;
+      if(d.animo!=null){ t.moodSum+=d.animo; t.moodN++; }
+      for(var m=0;m<meds.length;m++){ t.medT++; if(d.meds&&d.meds[meds[m].id])t.medD++; }
+      var em=d.emociones||[]; for(var e=0;e<em.length;e++) t.emo[em[e]]=(t.emo[em[e]]||0)+1;
+    } return t;
+  }
+  function weeklySummaryCard(){
+    var a=weekTotals(0), b=weekTotals(7);
+    function delta(x,y){ if(y===0) return x>0?'<span class="d up">▲</span>':''; var p=Math.round((x-y)/y*100); if(p===0)return''; return '<span class="d '+(p>0?'up':'down')+'">'+(p>0?'▲':'▼')+Math.abs(p)+'%</span>'; }
+    var mood=a.moodN?(a.moodSum/a.moodN):null;
+    var adher=a.medT?Math.round(a.medD/a.medT*100):null;
+    var topEmo="—",max=0; for(var e in a.emo){ if(a.emo[e]>max){max=a.emo[e];topEmo=e;} }
+    var h='<div class="card"><div class="sec-label">Resumen de la semana</div><div class="week-grid">'+
+      '<div class="wk"><div><span class="v">'+a.mente+'</span><small style="color:var(--muted)"> min</small>'+delta(a.mente,b.mente)+'</div><div class="k">Mente & espíritu</div></div>'+
+      '<div class="wk"><div><span class="v">'+a.cuerpo+'</span><small style="color:var(--muted)"> min</small>'+delta(a.cuerpo,b.cuerpo)+'</div><div class="k">Cuerpo</div></div>'+
+      '<div class="wk"><div><span class="v">'+a.familia+'</span><small style="color:var(--muted)"> min</small>'+delta(a.familia,b.familia)+'</div><div class="k">Familia</div></div>'+
+      '<div class="wk"><div><span class="v">'+(mood!=null?mood.toFixed(1):"—")+'</span></div><div class="k">Ánimo promedio</div></div>'+
+      '<div class="wk"><div><span class="v">'+(adher!=null?adher+"%":"—")+'</span></div><div class="k">Adherencia medic.</div></div>'+
+      '<div class="wk"><div><span class="v" style="font-size:15px">'+topEmo+'</span></div><div class="k">Emoción más frecuente</div></div>'+
+      '</div><div class="small-note" style="margin-top:12px">Comparado con la semana anterior. ▲ subió, ▼ bajó.</div></div>';
+    return h;
+  }
+
+  function streaks7(){
+    var o={mente:0,cuerpo:0,familia:0,respira:0,med:0};
+    for(var i=0;i<7;i++){ var d=days[offsetKey(-i)]; if(!d)continue;
+      if((d.lectura||0)+(d.meditacion||0)+(d.oracion||0)>0)o.mente++;
+      if((d.deporte||0)>0)o.cuerpo++;
+      var fs=0; for(var k in (d.familia||{}))fs+=d.familia[k]||0; if(fs>0)o.familia++;
+      if((d.respiracion||0)>0)o.respira++;
+      var any=false; for(var m in (d.meds||{})){ if(d.meds[m]){any=true;break;} } if(any)o.med++;
+    } return o;
+  }
+
+  /* ===================== GRÁFICAS ===================== */
+  var curPeriod="semanal", curMetric="pilares";
+  var PERIODS=[["diario","Diario"],["semanal","Semanal"],["quincenal","Quincenal"],["mensual","Mensual"],["trimestre","Trimestre"],["semestre","Semestre"],["anual","Anual"]];
+  function metricsList(){ var m=[["pilares","Pilares (tiempo)"],["familia","Familia (detalle)"],["mente","Actividades mente"],["deporte","Deporte"],["sueno","Horas de sueño"],["animo","Ánimo promedio"],["peso","Peso"],["adher","Adherencia medicinas"]]; if(activities.length)m.push(["custom","Otros hábitos"]); return m; }
+  function viewGraficas(){
+    var per=""; for(var i=0;i<PERIODS.length;i++) per+='<button data-per="'+PERIODS[i][0]+'" class="'+(curPeriod===PERIODS[i][0]?'on':'')+'">'+PERIODS[i][1]+'</button>';
+    var ML=metricsList(),opt=""; for(var j=0;j<ML.length;j++) opt+='<option value="'+ML[j][0]+'"'+(curMetric===ML[j][0]?' selected':'')+'>'+ML[j][1]+'</option>';
+    return '<div class="card"><label class="fld">¿Qué quieres ver?</label><select id="metricSel">'+opt+'</select>'+
+      '<div class="seg" id="perSeg" style="margin-top:14px">'+per+'</div><div id="chart" class="chart"></div><div class="small-note" id="chartNote"></div></div>';
+  }
+  function buckets(period){
+    var out=[],i,j;
+    if(period==="diario"){ for(i=13;i>=0;i--){ var k=offsetKey(-i); out.push({label:k.slice(8)+"/"+k.slice(5,7),keys:[k]}); } return out; }
+    if(period==="semanal"){ for(i=11;i>=0;i--){ var ks=[]; for(j=0;j<7;j++)ks.push(offsetKey(-(i*7+j))); out.push({label:"S-"+i,keys:ks}); } return out; }
+    if(period==="quincenal"){ for(i=7;i>=0;i--){ var k2=[]; for(j=0;j<15;j++)k2.push(offsetKey(-(i*15+j))); out.push({label:"Q-"+i,keys:k2}); } return out; }
+    if(period==="mensual") return monthBuckets(12);
+    if(period==="trimestre") return groupMonths(monthBuckets(24),3);
+    if(period==="semestre") return groupMonths(monthBuckets(36),6);
+    if(period==="anual") return yearBuckets();
+    return out;
+  }
+  function monthBuckets(count){ var out=[],base=new Date(); base.setDate(1); var nm=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    for(var i=count-1;i>=0;i--){ var d=new Date(base.getFullYear(),base.getMonth()-i,1); var y=d.getFullYear(),m=d.getMonth()+1,pre=y+"-"+(m<10?"0"+m:m); var keys=[]; for(var k in days){ if(k.indexOf(pre)===0)keys.push(k); } out.push({label:nm[m-1]+" "+String(y).slice(2),keys:keys}); } return out; }
+  function groupMonths(mb,size){ var out=[]; for(var i=0;i<mb.length;i+=size){ var keys=[],lbl=""; for(var j=i;j<i+size&&j<mb.length;j++){ keys=keys.concat(mb[j].keys); if(j===i)lbl=mb[j].label; } out.push({label:lbl,keys:keys}); } return out; }
+  function yearBuckets(){ var yrs={}; for(var k in days){ var y=k.slice(0,4); (yrs[y]=yrs[y]||[]).push(k); } var arr=Object.keys(yrs).sort(),out=[]; for(var i=0;i<arr.length;i++)out.push({label:arr[i],keys:yrs[arr[i]]}); if(!out.length)out.push({label:String(new Date().getFullYear()),keys:[]}); return out; }
+  function sumKeys(keys,fn){ var s=0; for(var i=0;i<keys.length;i++){ var d=days[keys[i]]; if(d)s+=fn(d)||0; } return s; }
+  function avgKeys(keys,fn){ var s=0,n=0; for(var i=0;i<keys.length;i++){ var d=days[keys[i]]; if(d){ var v=fn(d); if(v!=null){s+=v;n++;} } } return n?s/n:null; }
+
+  function drawChart(){
+    var el=document.getElementById("chart"); if(!el||!window.echarts)return;
+    chart=window.echarts.init(el); var bs=buckets(curPeriod); var labels=bs.map(function(b){return b.label;});
+    var axis={axisLine:{lineStyle:{color:"#D8CFBD"}},axisLabel:{color:"#8C8576",fontSize:10},splitLine:{lineStyle:{color:"#EFE8D8"}}};
+    var grid={left:8,right:14,top:30,bottom:6,containLabel:true}; var opt,note="";
+    function bar(name,color,fn){ return {name:name,type:"bar",stack:"x",itemStyle:{color:color,borderRadius:[3,3,0,0]},data:bs.map(function(b){return Math.round(sumKeys(b.keys,fn));})}; }
+    function line(name,color,fn,avg){ return {name:name,type:"line",smooth:true,symbol:"circle",symbolSize:6,lineStyle:{width:3,color:color},itemStyle:{color:color},connectNulls:true,data:bs.map(function(b){ var v=avg?avgKeys(b.keys,fn):sumKeys(b.keys,fn); return v==null?null:Math.round(v*10)/10; })}; }
+
+    if(curMetric==="pilares"){ opt=baseOpt(labels,grid,axis,true); opt.series=[bar("Mente","#6C7BD1",sumMente),bar("Cuerpo","#D9794E",function(d){return d.deporte||0;}),bar("Familia","#C4577A",sumFamilia)]; note="Minutos por pilar. Busca columnas parejas: ahí está el equilibrio."; }
+    else if(curMetric==="familia"){ opt=baseOpt(labels,grid,axis,true); opt.series=[]; for(var i=0;i<members.length;i++){ (function(mb,idx){ opt.series.push(bar(mb.name,FAM_COLORS[idx%FAM_COLORS.length],function(d){return d.familia[mb.id]||0;})); })(members[i],i); } note="Tiempo con cada persona. ¿Alguien está quedando sin tiempo?"; }
+    else if(curMetric==="mente"){ opt=baseOpt(labels,grid,axis,true); opt.series=[bar("Lectura","#6C7BD1",function(d){return d.lectura||0;}),bar("Meditación","#7E8FE0",function(d){return d.meditacion||0;}),bar("Oración","#9AA8EC",function(d){return d.oracion||0;}),bar("Respiración","#B7C2F4",function(d){return d.respiracion||0;})]; note="Detalle de tus prácticas de mente y espíritu."; }
+    else if(curMetric==="deporte"){ opt=baseOpt(labels,grid,axis,false); opt.series=[bar("Deporte","#D9794E",function(d){return d.deporte||0;})]; note="Minutos de actividad física por periodo."; }
+    else if(curMetric==="sueno"){ opt=baseOpt(labels,grid,axis,false); opt.yAxis.scale=true; opt.series=[line("Sueño","#7E8FE0",function(d){return d.sueno;},true)]; note="Horas de sueño promedio. Un descanso estable sostiene el ánimo, el peso y la energía."; }
+    else if(curMetric==="animo"){ opt=baseOpt(labels,grid,axis,false); opt.yAxis.min=1; opt.yAxis.max=5; opt.series=[line("Ánimo","#E0A92E",function(d){return d.animo;},true)]; note="Promedio de ánimo (1 muy bajo · 5 muy bien). Mira si sube con más deporte o familia."; }
+    else if(curMetric==="peso"){ opt=baseOpt(labels,grid,axis,false); opt.yAxis.scale=true; opt.series=[line("Peso","#5FA382",function(d){return d.peso;},true)]; note="Tendencia de peso. Fíjate en la pendiente de varias semanas, no en un día."; }
+    else if(curMetric==="adher"){ opt=baseOpt(labels,grid,axis,false); opt.yAxis.min=0; opt.yAxis.max=100; opt.yAxis.axisLabel.formatter="{value}%"; opt.series=[line("Adherencia","#5FA382",function(d){ var t=meds.length; if(t===0)return null; var done=0; for(var i=0;i<meds.length;i++){ if(d.meds&&d.meds[meds[i].id])done++; } return done/t*100; },true)]; note="Porcentaje de medicinas tomadas."; }
+    else if(curMetric==="custom"){ opt=baseOpt(labels,grid,axis,true); opt.series=[]; for(var c=0;c<activities.length;c++){ (function(ac,idx){ opt.series.push(bar(ac.name,["#6C7BD1","#5FA382","#E0A92E","#D9794E","#C4577A"][idx%5],function(d){return d.custom[ac.id]||0;})); })(activities[c],c); } note="Tus hábitos personalizados."; }
+
+    chart.setOption(opt); var n=document.getElementById("chartNote"); if(n)n.textContent=note;
+  }
+  function baseOpt(labels,grid,axis,stack){ return {color:["#6C7BD1","#D9794E","#C4577A","#E0A92E","#5FA382"],tooltip:{trigger:"axis",backgroundColor:"#2C2A24",borderColor:"#2C2A24",textStyle:{color:"#fff",fontSize:12}},legend:{show:stack,top:0,textStyle:{color:"#8C8576",fontSize:11},itemWidth:12,itemHeight:8,icon:"roundRect"},grid:grid,xAxis:{type:"category",data:labels,axisLine:axis.axisLine,axisLabel:axis.axisLabel,axisTick:{show:false}},yAxis:{type:"value",axisLabel:{color:"#8C8576",fontSize:10},splitLine:axis.splitLine},series:[]}; }
+
+  function drawRadar(){
+    var el=document.getElementById("radar"); if(!el||!window.echarts)return;
+    radar=window.echarts.init(el); var d=getDay(todayKey());
+    var mente=sumMente(d),cuerpo=(d.deporte||0),familia=sumFamilia(d);
+    var emo=(d.animo!=null?d.animo/5*100:0);
+    var medT=meds.length,medD=0; for(var i=0;i<meds.length;i++){ if(d.meds[meds[i].id])medD++; } var adher=medT?medD/medT*100:0;
+    radar.setOption({tooltip:{},radar:{indicator:[{name:"Mente",max:100},{name:"Cuerpo",max:100},{name:"Familia",max:100},{name:"Ánimo",max:100},{name:"Medicinas",max:100}],radius:"66%",axisName:{color:"#8C8576",fontSize:11},splitLine:{lineStyle:{color:"#E6DECE"}},splitArea:{areaStyle:{color:["#FCFAF4","#F7F2E7"]}},axisLine:{lineStyle:{color:"#E6DECE"}}},
+      series:[{type:"radar",data:[{value:[Math.min(100,mente/(settings.metaMente||30)*100),Math.min(100,cuerpo/(settings.metaCuerpo||30)*100),Math.min(100,familia/(settings.metaFamilia||60)*100),emo,adher],areaStyle:{color:"rgba(95,163,130,.25)"},lineStyle:{color:"#5FA382",width:2},itemStyle:{color:"#5FA382"}}]}]});
+  }
+
+  /* ===================== MEDICINAS ===================== */
+  function viewMedicinas(){
+    var h='<div class="card"><h2>Mis medicinas</h2><div class="sub">Configúralas una vez con su hora. Aparecerán cada día en ✍️ Hoy para marcar la toma, y te avisaré a su hora si activas recordatorios en ⚙️ Más.</div>';
+    if(meds.length===0)h+='<div class="empty">No has agregado medicinas todavía.</div>';
+    else for(var i=0;i<meds.length;i++){ var m=meds[i]; h+='<div class="med"><div class="info"><div class="n">'+esc(m.nombre)+'</div><div class="h">'+(m.hora?'🕐 '+m.hora:'sin hora')+(m.dosis?' · '+esc(m.dosis):'')+'</div></div><button class="del" data-delmed="'+m.id+'">🗑️</button></div>'; }
+    h+='<div style="margin-top:14px"><label class="fld">Agregar medicina</label>'+
+      '<div class="addbar"><input class="t" type="text" id="mNombre" placeholder="Nombre"><input class="h" type="time" id="mHora"></div>'+
+      '<div class="addbar"><input type="text" id="mDosis" placeholder="Dosis (ej: 1 tableta, 500 mg)"></div>'+
+      '<button class="btn btn-ghost" id="addMed" style="margin-top:10px">+ Agregar medicina</button></div></div>';
+    if(meds.length){ var t=0,done=0; for(var x=0;x<7;x++){ var d=days[offsetKey(-x)]; if(!d)continue; for(var y=0;y<meds.length;y++){ t++; if(d.meds[meds[y].id])done++; } } var pct=t?Math.round(done/t*100):0;
+      h+='<div class="card"><div class="sec-label">Adherencia · últimos 7 días</div><div style="padding:6px 0"><div class="v" style="color:var(--salud);font-family:Fraunces,serif;font-size:34px;font-weight:600">'+pct+'%</div><div class="k" style="color:var(--muted);font-size:12px;font-weight:600">'+done+' de '+t+' tomas registradas</div></div></div>'; }
+    return h;
+  }
+
+  /* ===================== MÁS (ajustes) ===================== */
+  function viewMas(){
+    var h="";
+    // metas
+    h+='<div class="card"><h2>Metas diarias</h2><div class="sub">Definen el llenado del radar de equilibrio. Mejor metas pequeñas y sostenibles que altas e imposibles.</div>'+
+      metaInput("metaMente","Mente & espíritu (min)")+metaInput("metaCuerpo","Cuerpo / deporte (min)")+metaInput("metaFamilia","Familia (min)")+metaInput("metaRespira","Respiración (min)")+
+      '<button class="btn btn-ghost" id="saveMetas" style="margin-top:6px">Guardar metas</button><div class="saved" id="metaSaved">✓ Guardado</div></div>';
+
+    // miembros familia
+    var fam=""; for(var i=0;i<members.length;i++){ var m=members[i]; fam+='<div class="item-line"><span class="e">'+m.emoji+'</span><span class="n">'+esc(m.name)+'</span><span class="r">'+esc(m.role)+'</span><button class="del" data-delmem="'+m.id+'">🗑️</button></div>'; }
+    h+='<div class="card"><h2>Familia</h2><div class="sub">Personas a las que les llevas tiempo de conversación. Agrega las que quieras.</div>'+fam+
+      '<div style="margin-top:12px"><div class="addbar"><input class="e" type="text" id="memEmoji" value="🙂"><input class="t" type="text" id="memName" placeholder="Nombre"><input type="text" id="memRole" placeholder="Rol (Hijo, Hermano…)"></div>'+
+      '<button class="btn btn-ghost" id="addMem" style="margin-top:10px">+ Agregar persona</button></div></div>';
+
+    // hábitos
+    var hb=""; if(activities.length){ for(var a=0;a<activities.length;a++){ var ac=activities[a]; hb+='<div class="item-line"><span class="e">'+ac.emoji+'</span><span class="n">'+esc(ac.name)+'</span><button class="del" data-delact="'+ac.id+'">🗑️</button></div>'; } } else hb='<div class="empty">Sin hábitos personalizados.</div>';
+    h+='<div class="card"><h2>Otros hábitos</h2><div class="sub">Agrega cualquier hábito que quieras medir en minutos (caminar, journaling, estudio, instrumento…). Aparecerán en ✍️ Hoy.</div>'+hb+
+      '<div style="margin-top:12px"><div class="addbar"><input class="e" type="text" id="actEmoji" value="✨"><input class="t" type="text" id="actName" placeholder="Nombre del hábito"></div>'+
+      '<button class="btn btn-ghost" id="addAct" style="margin-top:10px">+ Agregar hábito</button></div></div>';
+
+    // recordatorios
+    var notifTxt = (window.Notification && Notification.permission==="granted") ? "Recordatorios activados ✓" : "Activar recordatorios de medicina";
+    h+='<div class="card"><h2>Recordatorios</h2><div class="sub">Aviso a la hora de cada medicina.</div>'+
+      '<button class="btn btn-ghost" id="notifBtn">'+notifTxt+'</button>'+
+      '<div class="small-note"><b>En iPhone</b> las notificaciones web son limitadas: lo más confiable es crear la alarma de cada medicina en la app <b>Recordatorios</b> o <b>Reloj</b> de tu iPhone, y usar esta app para marcar la toma y ver tu adherencia. En Android instalada, los avisos pueden sonar con la app cerrada.</div></div>';
+
+    // exportar / respaldo
+    h+='<div class="card"><h2>Respaldo y exportar</h2><div class="sub">Tus datos viven solo en este dispositivo. Guarda un respaldo de vez en cuando: te sirve para no perder nada, restaurar, o pasar tu información a otro teléfono.</div>'+
+      '<button class="btn btn-soft" id="expJson" style="margin-bottom:10px">💾 Guardar respaldo (.json)</button>'+
+      '<button class="btn btn-soft" id="impJson" style="margin-bottom:10px">📥 Restaurar desde respaldo</button>'+
+      '<input type="file" id="impFile" accept="application/json,.json" class="hide">'+
+      '<button class="btn btn-soft" id="expCsv" style="margin-bottom:10px">📊 Exportar a Excel (CSV)</button>'+
+      '<button class="btn btn-soft" id="expPdf">📄 Exportar resumen a PDF</button>'+
+      '<div class="saved" id="impSaved">✓ Restaurado</div></div>';
+
+    // privacidad / PIN
+    var hasPin=!!settings.pin;
+    h+='<div class="card"><h2>Privacidad</h2><div class="sub">Solo tú ves tu información: nada se sube a internet ni a una cuenta, todo queda en este teléfono. Puedes añadir un PIN para que la app pida clave al abrirse.</div>'+
+      (hasPin
+        ? '<div class="item-line"><span class="e">🔒</span><span class="n">PIN activado</span><button class="btn btn-soft" id="rmPin" style="width:auto;padding:8px 14px;margin:0">Quitar PIN</button></div>'
+        : '<div class="addbar"><input type="text" id="newPin" inputmode="numeric" pattern="\\d*" maxlength="4" placeholder="PIN de 4 dígitos"></div><button class="btn btn-ghost" id="setPin" style="margin-top:10px">Activar PIN</button>')+
+      '<div class="small-note">El PIN es un candado básico para que alguien que tome tu teléfono no entre de una. No cifra los datos; para privacidad fuerte, suma el bloqueo de pantalla del propio iPhone.</div></div>';
+    return h;
+  }
+  function metaInput(key,label){ return '<label class="fld">'+label+'</label><input type="number" data-meta="'+key+'" value="'+(settings[key]||0)+'" style="margin-bottom:12px">'; }
+
+  /* ===================== BIND ===================== */
+  function bind(){
+    var v=document.getElementById("view");
+
+    if(tab==="hoy"){
+      v.querySelectorAll(".stepper[data-field]").forEach(function(s){ var f=s.getAttribute("data-field"),st=+s.getAttribute("data-step");
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+      v.querySelectorAll(".stepper[data-fam]").forEach(function(s){ var f=s.getAttribute("data-fam"),st=+s.getAttribute("data-step");
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.familia[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.familia[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+      v.querySelectorAll(".stepper[data-custom]").forEach(function(s){ var f=s.getAttribute("data-custom"),st=+s.getAttribute("data-step");
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.custom[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.custom[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+      v.querySelectorAll(".stepper[data-sleep]").forEach(function(s){ var st=+s.getAttribute("data-step");
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.sueno||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; if(c>16)c=16; c=Math.round(c*10)/10; d.sueno=c; s.querySelector(".val").innerHTML=c+' <small>h</small>'; scheduleSave(); }); });
+      bindEl("#depTipo","change",function(el){ getDay(todayKey()).deporteTipo=el.value; scheduleSave(); });
+      bindEl("#peso","input",function(el){ var val=el.value.replace(",","."); getDay(todayKey()).peso=val===""?null:parseFloat(val); scheduleSave(); });
+      bindEl("#libroTit","input",function(el){ getDay(todayKey()).libro.titulo=el.value; scheduleSave(); });
+      bindEl("#libroNota","input",function(el){ getDay(todayKey()).libro.nota=el.value; scheduleSave(); });
+      bindEl("#nota","input",function(el){ getDay(todayKey()).nota=el.value; scheduleSave(); });
+      v.querySelectorAll(".mood").forEach(function(mo){ mo.addEventListener("click",function(){ getDay(todayKey()).animo=+mo.getAttribute("data-mood"); v.querySelectorAll(".mood").forEach(function(o){o.classList.toggle("sel",o===mo);}); scheduleSave(); }); });
+      v.querySelectorAll(".chip[data-emo]").forEach(function(c){ c.addEventListener("click",function(){ var d=getDay(todayKey()),em=c.getAttribute("data-emo"),i=d.emociones.indexOf(em); if(i>=0)d.emociones.splice(i,1); else d.emociones.push(em); c.classList.toggle("sel"); scheduleSave(); }); });
+      v.querySelectorAll(".check[data-med]").forEach(function(ch){ ch.addEventListener("click",function(){ var d=getDay(todayKey()),id=ch.getAttribute("data-med"); d.meds[id]=!d.meds[id]; ch.classList.toggle("on",d.meds[id]); ch.textContent=d.meds[id]?"✓":""; scheduleSave(); }); });
+      bindEl("#openBreath","click",function(){ openBreath(); });
+      bindEl("#saveBtn","click",function(){ persistDays(); flash("#savedMsg"); });
+    }
+
+    if(tab==="balance"){ setTimeout(drawRadar,40); bindEl("#aiBtn","click",runAI); }
+
+    if(tab==="mascota"){
+      var stage=document.getElementById("petStage"); if(stage) stage.addEventListener("click",petTapHandler);
+      bindEl("#exploreBtn","click",petExplore);
+      bindEl("#toggle3d","click",function(){ settings.pet3d=!settings.pet3d; persist("eq:settings",settings); render(); });
+      bindEl("#renamePet","click",function(){ var n=prompt("¿Cómo se llama tu mascota?", settings.petName||"Koa"); if(n!==null){ n=n.trim().slice(0,18); if(n){ settings.petName=n; persist("eq:settings",settings); render(); } } });
+      mountPet();
+    }
+
+    if(tab==="crecer"){
+      var gseg=v.querySelector(".seg"); if(gseg) gseg.addEventListener("click",function(e){ var b=e.target.closest("button[data-gm]"); if(!b)return; curGrowth=b.getAttribute("data-gm"); render(); });
+      bindEl("#addId","click",function(){ var t=val("#idText"); if(!t)return; growth.identity.push({id:uid("id"),text:t}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delid]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delid"); growth.identity=growth.identity.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      bindEl("#addStack","click",function(){ var a=val("#stAfter"),t=val("#stThen"); if(!a||!t)return; growth.stacks.push({id:uid("st"),after:a,then:t}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delstack]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delstack"); growth.stacks=growth.stacks.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      bindEl("#futureSelf","input",function(el){ growth.futureSelf=el.value; persistGrowth(); flash("#fsSaved"); });
+      bindEl("#startRehearse","click",openRehearse);
+      bindEl("#addPat","click",function(){ var e2=val("#patEmo"),c=val("#patChoice"); if(!e2||!c)return; growth.patterns.push({id:uid("p"),emo:e2,choice:c,date:offsetKey(0).slice(5)}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delpat]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delpat"); growth.patterns=growth.patterns.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      bindEl("#addRef","click",function(){ var rg=val("#rfRigid"),fx=val("#rfFlex"); if(!rg||!fx)return; growth.reframes.push({id:uid("r"),rigid:rg,why:val("#rfWhy"),flex:fx,date:offsetKey(0).slice(5)}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delref]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delref"); growth.reframes=growth.reframes.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      // Propósito
+      bindEl("#purposeText","input",function(el){ growth.purpose=el.value; persistGrowth(); flash("#purpSaved"); });
+      bindEl("#addValue","click",function(){ var t=val("#valText"); if(!t)return; growth.values.push({id:uid("v"),text:t}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delval]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delval"); growth.values=growth.values.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      bindEl("#intencion","input",function(el){ getDay(todayKey()).intencion=el.value; persistDays(); flash("#intSaved"); });
+      bindEl("#retoMeta","input",function(el){ growth.reto.meta=el.value; persistGrowth(); });
+      v.querySelectorAll(".cell40").forEach(function(b){ b.addEventListener("click",function(){ var c=+b.getAttribute("data-cell"); if(!growth.reto.marcas)growth.reto.marcas=[]; growth.reto.marcas[c]=!growth.reto.marcas[c]; persistGrowth(); render(); }); });
+      // Disciplina
+      bindEl("#metaGrande","input",function(el){ growth.metaGrande=el.value; persistGrowth(); flash("#mgSaved"); });
+      bindEl("#addPower","click",function(){ var t=val("#pwText"); if(!t)return; growth.power.push({id:uid("pw"),text:t}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delpower]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delpower"); growth.power=growth.power.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      v.querySelectorAll(".check[data-pw]").forEach(function(ch){ ch.addEventListener("click",function(){ var d=getDay(todayKey()); if(!d.power)d.power={}; var id=ch.getAttribute("data-pw"); d.power[id]=!d.power[id]; persistDays(); render(); }); });
+      bindEl("#addAfir","click",function(){ var t=val("#afText"); if(!t)return; growth.afirmaciones.push({id:uid("af"),text:t}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delafir]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delafir"); growth.afirmaciones=growth.afirmaciones.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      // Relaciones
+      bindEl("#addPerson","click",function(){ var n=val("#peName"); if(!n)return; growth.people.push({id:uid("pe"),name:n,note:val("#peNote")}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delperson]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delperson"); growth.people=growth.people.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      bindEl("#addAprecio","click",function(){ var p=val("#apPerson"),ac=val("#apAction"); if(!p||!ac)return; growth.aprecios.push({id:uid("ap"),person:p,action:ac,date:offsetKey(0).slice(5)}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delapr]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delapr"); growth.aprecios=growth.aprecios.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      // Biblioteca
+      bindEl("#addBook","click",function(){ var t=val("#nbTitle"); if(!t)return; growth.books.push({id:uid("bk"),title:t,author:val("#nbAuthor"),pages:+val("#nbPages")||0,current:0,notes:[],done:false}); persistGrowth(); render(); });
+      v.querySelectorAll("[data-delbook]").forEach(function(b){ b.addEventListener("click",function(){ if(!confirm("¿Eliminar este libro?"))return; var id=b.getAttribute("data-delbook"); growth.books=growth.books.filter(function(x){return x.id!==id;}); persistGrowth(); render(); }); });
+      v.querySelectorAll("[data-updbook]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-updbook"); var bk=findBook(id); if(!bk)return; var cur=document.getElementById("bp_"+id).value, tot=document.getElementById("bt_"+id).value; bk.current=+cur||0; bk.pages=+tot||0; persistGrowth(); render(); }); });
+      v.querySelectorAll("[data-donebook]").forEach(function(b){ b.addEventListener("click",function(){ var bk=findBook(b.getAttribute("data-donebook")); if(!bk)return; bk.done=!bk.done; persistGrowth(); render(); }); });
+      v.querySelectorAll("[data-addnote]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-addnote"); var bk=findBook(id); if(!bk)return; var t=document.getElementById("ni_"+id).value.trim(); if(!t)return; bk.notes.push({id:uid("nt"),text:t}); persistGrowth(); render(); }); });
+      v.querySelectorAll("[data-delnote]").forEach(function(b){ b.addEventListener("click",function(){ var parts=b.getAttribute("data-delnote").split("|"); var bk=findBook(parts[0]); if(!bk)return; bk.notes=bk.notes.filter(function(x){return x.id!==parts[1];}); persistGrowth(); render(); }); });
+      v.querySelectorAll("[data-tohoy]").forEach(function(b){ b.addEventListener("click",function(){ getDay(todayKey()).intencion=b.getAttribute("data-tohoy"); persistDays(); curGrowth="proposito"; render(); }); });
+      // Ritual
+      bindEl("#rIntencion","input",function(el){ getDay(todayKey()).intencion=el.value; persistDays(); flash("#manSaved"); });
+      function setArr(field,idx,el){ var d=getDay(todayKey()); if(!d[field])d[field]=[]; d[field][idx]=el.value; persistDays(); }
+      bindEl("#pri0","input",function(el){ setArr("prioridades",0,el); flash("#manSaved"); });
+      bindEl("#pri1","input",function(el){ setArr("prioridades",1,el); flash("#manSaved"); });
+      bindEl("#pri2","input",function(el){ setArr("prioridades",2,el); flash("#manSaved"); });
+      bindEl("#gr0","input",function(el){ setArr("gratitudes",0,el); flash("#nocheSaved"); });
+      bindEl("#gr1","input",function(el){ setArr("gratitudes",1,el); flash("#nocheSaved"); });
+      bindEl("#gr2","input",function(el){ setArr("gratitudes",2,el); flash("#nocheSaved"); });
+      bindEl("#rNota","input",function(el){ getDay(todayKey()).nota=el.value; persistDays(); flash("#nocheSaved"); });
+      bindEl("#wWin","input",function(el){ growth.weekly.win=el.value; growth.weekly.date=offsetKey(0).slice(5); persistGrowth(); flash("#wkSaved"); });
+      bindEl("#wAdj","input",function(el){ growth.weekly.adjust=el.value; growth.weekly.date=offsetKey(0).slice(5); persistGrowth(); flash("#wkSaved"); });
+      bindEl("#wFocus","input",function(el){ growth.weekly.focus=el.value; growth.weekly.date=offsetKey(0).slice(5); persistGrowth(); flash("#wkSaved"); });
+    }
+
+    if(tab==="graficas"){
+      bindEl("#metricSel","change",function(el){ curMetric=el.value; if(chart){chart.dispose();chart=null;} drawChart(); });
+      var seg=v.querySelector("#perSeg"); if(seg) seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; curPeriod=b.getAttribute("data-per"); v.querySelectorAll("#perSeg button").forEach(function(x){x.classList.toggle("on",x===b);}); if(chart){chart.dispose();chart=null;} drawChart(); });
+      setTimeout(drawChart,40);
+    }
+
+    if(tab==="medicinas"){
+      bindEl("#addMed","click",function(){ var n=val("#mNombre"); if(!n)return; meds.push({id:uid("m"),nombre:n,hora:val("#mHora"),dosis:val("#mDosis")}); persist("eq:meds",meds); scheduleReminders(); render(); });
+      v.querySelectorAll("[data-delmed]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delmed"); meds=meds.filter(function(m){return m.id!==id;}); persist("eq:meds",meds); render(); }); });
+    }
+
+    if(tab==="mas"){
+      bindEl("#saveMetas","click",function(){ v.querySelectorAll("[data-meta]").forEach(function(inp){ settings[inp.getAttribute("data-meta")]=parseInt(inp.value,10)||0; }); persist("eq:settings",settings); flash("#metaSaved"); });
+      bindEl("#addMem","click",function(){ var n=val("#memName"); if(!n)return; members.push({id:uid("f"),name:n,role:val("#memRole")||"Familia",emoji:val("#memEmoji")||"🙂"}); persist("eq:members",members); render(); });
+      v.querySelectorAll("[data-delmem]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delmem"); members=members.filter(function(m){return m.id!==id;}); persist("eq:members",members); render(); }); });
+      bindEl("#addAct","click",function(){ var n=val("#actName"); if(!n)return; activities.push({id:uid("a"),name:n,emoji:val("#actEmoji")||"✨"}); persist("eq:activities",activities); render(); });
+      v.querySelectorAll("[data-delact]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delact"); activities=activities.filter(function(a){return a.id!==id;}); persist("eq:activities",activities); render(); }); });
+      bindEl("#notifBtn","click",function(){ if(!("Notification" in window)){ alert("Tu navegador no soporta notificaciones."); return; } Notification.requestPermission().then(function(p){ settings.notif=(p==="granted"); persist("eq:settings",settings); scheduleReminders(); render(); }); });
+      bindEl("#expCsv","click",exportCSV);
+      bindEl("#expPdf","click",exportPDF);
+      bindEl("#expJson","click",exportJSON);
+      bindEl("#impJson","click",function(){ var f=document.querySelector("#impFile"); if(f)f.click(); });
+      bindEl("#impFile","change",importJSON);
+      bindEl("#setPin","click",function(){ var p=val("#newPin"); if(!/^\d{4}$/.test(p)){ alert("El PIN debe ser de 4 dígitos."); return; } settings.pin=p; persist("eq:settings",settings); render(); });
+      bindEl("#rmPin","click",function(){ delete settings.pin; persist("eq:settings",settings); render(); });
+    }
+  }
+  function bindEl(sel,ev,fn){ var el=document.querySelector(sel); if(el) el.addEventListener(ev,function(){ fn(el); }); }
+  function val(sel){ var el=document.querySelector(sel); return el?el.value.trim():""; }
+  function flash(sel){ var m=document.querySelector(sel); if(!m)return; m.classList.add("show"); setTimeout(function(){m.classList.remove("show");},1800); }
+  function scheduleSave(){ clearTimeout(saveT); saveT=setTimeout(function(){ persistDays(); flash("#savedMsg"); },500); }
+
+  /* ===================== RESPIRACIÓN 7-6-7-6 ===================== */
+  var bPhases=[{n:"Inhala",d:7,s:1.55},{n:"Sostén",d:6,s:1.55},{n:"Exhala",d:7,s:0.7},{n:"Sostén",d:6,s:0.7}];
+  var bState={running:false,idx:0,left:0,cycle:0,total:0,timer:null};
+  function initBreath(){
+    document.getElementById("bToggle").addEventListener("click",function(){ bState.running=!bState.running; this.textContent=bState.running?"Pausar":"Reanudar"; });
+    document.getElementById("bFin").addEventListener("click",closeBreath);
+  }
+  function openBreath(){
+    bState={running:true,idx:0,left:bPhases[0].d,cycle:0,total:0,timer:null};
+    document.getElementById("bToggle").textContent="Pausar";
+    var ov=document.getElementById("breath"); ov.classList.add("show");
+    applyPhase(); 
+    bState.timer=setInterval(breathTick,1000);
+  }
+  function applyPhase(){
+    var p=bPhases[bState.idx];
+    var c=document.getElementById("bCircle");
+    c.style.transitionDuration=p.d+"s"; c.style.transform="scale("+p.s+")";
+    document.getElementById("bPhase").textContent=p.n;
+    document.getElementById("bCount").textContent=bState.left;
+    document.getElementById("bInfo").textContent="Ciclo "+bState.cycle+" · 7-6-7-6";
+  }
+  function breathTick(){
+    if(!bState.running)return;
+    bState.left--; bState.total++;
+    document.getElementById("bCount").textContent=Math.max(0,bState.left);
+    if(bState.left<=0){ bState.idx=(bState.idx+1)%bPhases.length; if(bState.idx===0)bState.cycle++; bState.left=bPhases[bState.idx].d; applyPhase(); }
+  }
+  function closeBreath(){
+    if(bState.timer)clearInterval(bState.timer);
+    document.getElementById("breath").classList.remove("show");
+    var mins=Math.round(bState.total/60);
+    if(mins>0){ var d=getDay(todayKey()); d.respiracion=(d.respiracion||0)+mins; persistDays(); }
+    if(tab==="hoy")render();
+  }
+
+  /* ===================== ENSAYO MENTAL ===================== */
+  var RH_STEPS=[
+    {t:"Cierra los ojos y respira hondo. Suelta la tensión de tu cuerpo.",d:15},
+    {t:"Imagina tu día ideal: ¿dónde estás, qué haces, con quién?",d:20},
+    {t:"Mírate sano, en calma y presente. Obsérvate lográndolo.",d:20},
+    {t:"Siente la gratitud de que ya ocurrió. Sonríe por dentro.",d:20},
+    {t:"Elige una acción pequeña de hoy que te acerque a ese yo.",d:15},
+    {t:"Respira hondo y regresa, llevando esa sensación contigo.",d:10}
+  ];
+  var rhState={idx:0,left:0,total:0,running:true,timer:null};
+  function initRehearse(){
+    document.getElementById("rhToggle").addEventListener("click",function(){ rhState.running=!rhState.running; this.textContent=rhState.running?"Pausar":"Reanudar"; });
+    document.getElementById("rhSkip").addEventListener("click",rhSkip);
+    document.getElementById("rhFin").addEventListener("click",closeRehearse);
+  }
+  function openRehearse(){ rhState={idx:0,left:RH_STEPS[0].d,total:0,running:true,timer:null}; document.getElementById("rhToggle").textContent="Pausar"; applyRh(); document.getElementById("rehearse").classList.add("show"); rhState.timer=setInterval(rhTick,1000); }
+  function applyRh(){ document.getElementById("rhStep").textContent=RH_STEPS[rhState.idx].t; document.getElementById("rhCount").textContent="Paso "+(rhState.idx+1)+" de "+RH_STEPS.length; }
+  function rhTick(){ if(!rhState.running)return; rhState.left--; rhState.total++; if(rhState.left<=0){ rhState.idx++; if(rhState.idx>=RH_STEPS.length){ closeRehearse(); return; } rhState.left=RH_STEPS[rhState.idx].d; applyRh(); } }
+  function rhSkip(){ rhState.idx++; if(rhState.idx>=RH_STEPS.length){ closeRehearse(); return; } rhState.left=RH_STEPS[rhState.idx].d; applyRh(); }
+  function closeRehearse(){ if(rhState.timer)clearInterval(rhState.timer); document.getElementById("rehearse").classList.remove("show"); var mins=Math.round(rhState.total/60); if(mins>0){ var d=getDay(todayKey()); d.meditacion=(d.meditacion||0)+mins; persistDays(); } }
+
+  /* ===================== ESPEJO IA ===================== */
+  function buildSummary(){
+    var rec=[]; for(var i=0;i<30;i++){ var k=offsetKey(-i); if(days[k])rec.push({k:k,d:days[k]}); }
+    if(rec.length===0)return null;
+    var t={mente:0,cuerpo:0,respira:0,familia:0,moodSum:0,moodN:0,low:0,medT:0,medD:0,emo:{},fam:{},notas:[],libros:{}};
+    for(var j=0;j<rec.length;j++){ var d=rec[j].d;
+      t.mente+=sumMente(d); t.cuerpo+=(d.deporte||0); t.respira+=(d.respiracion||0);
+      for(var fk in (d.familia||{})){ t.familia+=d.familia[fk]||0; t.fam[fk]=(t.fam[fk]||0)+(d.familia[fk]||0); }
+      if(d.animo!=null){ t.moodSum+=d.animo; t.moodN++; if(d.animo<=2)t.low++; }
+      for(var m=0;m<meds.length;m++){ t.medT++; if(d.meds&&d.meds[meds[m].id])t.medD++; }
+      var em=d.emociones||[]; for(var e=0;e<em.length;e++)t.emo[em[e]]=(t.emo[em[e]]||0)+1;
+      if(d.nota)t.notas.push(rec[j].k+": "+d.nota);
+      if(d.libro&&d.libro.titulo)t.libros[d.libro.titulo]=true;
+    }
+    var n=rec.length;
+    var emoArr=Object.keys(t.emo).sort(function(a,b){return t.emo[b]-t.emo[a];}).slice(0,5).map(function(x){return x+"("+t.emo[x]+")";});
+    var famArr=members.map(function(mb){ return mb.name+": "+Math.round((t.fam[mb.id]||0))+"min"; });
+    var pesos=[]; for(var p=rec.length-1;p>=0;p--){ if(rec[p].d.peso!=null)pesos.push(rec[p].d.peso); }
+    var pesoTxt = pesos.length>1 ? ("de "+pesos[0]+" a "+pesos[pesos.length-1]+" kg") : (pesos.length?pesos[0]+" kg":"sin datos");
+    var s="DATOS DE BIENESTAR (últimos "+n+" días con registro):\n";
+    s+="- Mente/espíritu: "+Math.round(t.mente/n)+" min/día promedio.\n";
+    s+="- Cuerpo/deporte: "+Math.round(t.cuerpo/n)+" min/día promedio.\n";
+    s+="- Respiración: "+Math.round(t.respira/n)+" min/día promedio.\n";
+    s+="- Tiempo familia por persona (total): "+famArr.join(", ")+".\n";
+    s+="- Ánimo promedio (1-5): "+(t.moodN?(t.moodSum/t.moodN).toFixed(1):"sin datos")+", con "+t.low+" día(s) de ánimo bajo (1-2).\n";
+    s+="- Emociones más frecuentes: "+(emoArr.length?emoArr.join(", "):"sin datos")+".\n";
+    s+="- Adherencia medicinas: "+(t.medT?Math.round(t.medD/t.medT*100)+"%":"sin medicinas registradas")+".\n";
+    s+="- Peso: "+pesoTxt+".\n";
+    s+="- Libros en lectura: "+(Object.keys(t.libros).join(", ")||"ninguno")+".\n";
+    if(t.notas.length) s+="- Notas recientes del usuario:\n"+t.notas.slice(0,6).join("\n")+"\n";
+    return s;
+  }
+  function runAI(){
+    var out=document.getElementById("aiOut"); var btn=document.getElementById("aiBtn");
+    var summary=buildSummary();
+    if(!summary){ out.innerHTML='<div class="ai-out">Registra al menos unos días para que el Espejo tenga algo que reflejar. Vuelve después de un par de jornadas anotadas.</div>'; return; }
+    btn.textContent="Pensando…"; btn.disabled=true;
+    var system="Eres 'Espejo', un acompañante de bienestar cálido, sereno y honesto que habla en español con tuteo. Recibes datos de hábitos, ánimo, emociones, tiempo en familia y salud de una persona. NO eres psiquiatra ni médico: NUNCA diagnosticas, NUNCA usas etiquetas clínicas (depresión, ansiedad como trastorno, etc.) ni hablas como si tuvieras un título. Tu trabajo es devolverle a la persona, como un espejo amable, lo que se ve en sus datos: patrones, lo que está cuidando bien, lo que parece estar quedando corto, y observaciones suaves sobre su ánimo y emociones SIN dramatizar. Estructura tu respuesta en 4 partes breves con encabezados: 1) Lo que estás cuidando bien, 2) Lo que parece estar quedando corto, 3) Tu ánimo y emociones (observación, no juicio), 4) Tres pasos pequeños y concretos para esta semana. Sé específico usando los números que recibes. Tono humano, directo, esperanzador, sin frases de relleno. Máximo ~320 palabras. Si ves ánimo bajo sostenido o varias señales de malestar, incluye al final, con suavidad y sin alarmismo, una invitación a hablar con un profesional de salud mental o con alguien de confianza, dejando claro que pedir ayuda es señal de fortaleza. Termina recordando en una línea que esto es una reflexión, no un diagnóstico.";
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      model:"claude-sonnet-4-20250514",max_tokens:1000,system:system,
+      messages:[{role:"user",content:summary+"\nAnaliza estos datos y devuélveme mi espejo de bienestar."}]
+    })}).then(function(r){return r.json();}).then(function(data){
+      var txt=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+      out.innerHTML='<div class="ai-out">'+esc(txt||"No recibí respuesta. Intenta de nuevo.")+'</div>';
+      btn.textContent="Analizar de nuevo"; btn.disabled=false;
+    }).catch(function(){ out.innerHTML='<div class="ai-out">No pude conectar con el análisis. El Espejo funciona directo dentro de Claude; en la app publicada en Firebase necesita un pequeño proxy con tu API key (Claude puede armártelo). Tus datos y gráficas funcionan igual sin esto.</div>'; btn.textContent="Reintentar"; btn.disabled=false; });
+  }
+
+  /* ===================== RECORDATORIOS ===================== */
+  function scheduleReminders(){
+    for(var i=0;i<reminderTimers.length;i++)clearTimeout(reminderTimers[i]); reminderTimers=[];
+    if(!("Notification" in window)||Notification.permission!=="granted")return;
+
+    // Preferido: notificaciones programadas vía Service Worker (suenan aunque la app esté cerrada — Android/Chrome)
+    if(navigator.serviceWorker && ('TimestampTrigger' in window)){
+      navigator.serviceWorker.ready.then(function(reg){
+        reg.getNotifications({includeTriggered:true}).then(function(list){
+          for(var n=0;n<list.length;n++){ if(list[n].tag && list[n].tag.indexOf('eq-med-')===0) list[n].close(); }
+          var now=Date.now();
+          meds.forEach(function(m){ if(!m.hora)return; var p=m.hora.split(":");
+            for(var day=0;day<7;day++){ var t=new Date(); t.setDate(t.getDate()+day); t.setHours(+p[0],+p[1],0,0);
+              if(t.getTime()>now){ try{ reg.showNotification("💊 Hora de tu medicina",{body:m.nombre+(m.dosis?" · "+m.dosis:""),tag:"eq-med-"+m.id+"-"+day,icon:"icon-192.png",badge:"icon-192.png",showTrigger:new window.TimestampTrigger(t.getTime())}); }catch(e){} }
+            } });
+        }).catch(function(){});
+      }).catch(function(){});
+      return;
+    }
+
+    // Respaldo: setTimeout mientras la app está abierta (solo hoy)
+    var now=new Date();
+    meds.forEach(function(m){ if(!m.hora)return; var p=m.hora.split(":"); var t=new Date(); t.setHours(+p[0],+p[1],0,0); var diff=t-now;
+      if(diff>0&&diff<24*3600*1000){ reminderTimers.push(setTimeout(function(){ try{ new Notification("💊 Hora de tu medicina",{body:m.nombre+(m.dosis?" · "+m.dosis:"")}); }catch(e){} },diff)); } });
+  }
+
+  /* ===================== EXPORTAR ===================== */
+  function download(filename,content,type){
+    try{ var blob=new Blob([content],{type:type}); var url=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },500); }
+    catch(e){ alert("No se pudo descargar en este entorno. Prueba abrir la app en el navegador."); }
+  }
+  function exportCSV(){
+    var cols=["Fecha","Lectura","Meditacion","Oracion","Respiracion","Deporte","TipoDeporte","Libro","Peso","Animo","Emociones"];
+    for(var i=0;i<members.length;i++)cols.push("Fam_"+members[i].name);
+    cols.push("Adherencia%","Nota");
+    var rows=[cols.join(";")];
+    var keys=Object.keys(days).sort();
+    for(var d=0;d<keys.length;d++){ var k=keys[d],x=days[k]; var medT=meds.length,medD=0; for(var m=0;m<meds.length;m++){ if(x.meds&&x.meds[meds[m].id])medD++; }
+      var r=[k,x.lectura||0,x.meditacion||0,x.oracion||0,x.respiracion||0,x.deporte||0,csv(x.deporteTipo),csv(x.libro?x.libro.titulo:""),(x.peso!=null?String(x.peso).replace(".",","):""),(x.animo!=null?x.animo:""),csv((x.emociones||[]).join(" / "))];
+      for(var f=0;f<members.length;f++)r.push((x.familia&&x.familia[members[f].id])||0);
+      r.push(medT?Math.round(medD/medT*100):""); r.push(csv(x.nota||""));
+      rows.push(r.join(";"));
+    }
+    download("equilibrio_datos.csv","\ufeff"+rows.join("\n"),"text/csv;charset=utf-8;");
+  }
+  function csv(s){ s=(s||"").replace(/"/g,'""').replace(/\n/g," "); return /[;"\n]/.test(s)?'"'+s+'"':s; }
+  function exportPDF(){
+    if(!window.jspdf){ alert("La librería PDF no cargó. Usa la exportación a Excel/CSV."); return; }
+    var doc=new window.jspdf.jsPDF(); var y=18; var L=15;
+    doc.setFont("helvetica","bold"); doc.setFontSize(20); doc.text("Equilibrio — Resumen",L,y); y+=8;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(120); doc.text("Generado "+new Date().toLocaleString('es-CO'),L,y); y+=12;
+    doc.setTextColor(40);
+    var a=weekTotals(0),b=weekTotals(7); var mood=a.moodN?(a.moodSum/a.moodN).toFixed(1):"—"; var adher=a.medT?Math.round(a.medD/a.medT*100)+"%":"—";
+    function line(t){ doc.setFontSize(12); doc.text(t,L,y); y+=8; }
+    function head(t){ y+=4; doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(t,L,y); y+=8; doc.setFont("helvetica","normal"); }
+    head("Esta semana (vs anterior)");
+    line("Mente & espiritu: "+a.mente+" min  (antes "+b.mente+")");
+    line("Cuerpo / deporte: "+a.cuerpo+" min  (antes "+b.cuerpo+")");
+    line("Familia: "+a.familia+" min  (antes "+b.familia+")");
+    line("Animo promedio: "+mood+" / 5");
+    line("Adherencia medicinas: "+adher);
+    head("Tiempo en familia (semana)");
+    for(var i=0;i<members.length;i++){ var fm=0; for(var j=0;j<7;j++){ var dd=days[offsetKey(-j)]; if(dd&&dd.familia)fm+=dd.familia[members[i].id]||0; } line(members[i].name+" ("+members[i].role+"): "+fm+" min"); }
+    var summary=buildSummary();
+    if(summary){ head("Promedios (30 dias)"); var lines=summary.split("\n").filter(function(l){return l.indexOf("- ")===0;});
+      for(var s=0;s<lines.length&&y<275;s++){ doc.setFontSize(11); var wrapped=doc.splitTextToSize(lines[s].replace("- ",""),180); for(var w=0;w<wrapped.length;w++){ doc.text(wrapped[w],L,y); y+=6; } } }
+    doc.save("equilibrio_resumen.pdf");
+  }
+
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function exportJSON(){
+    var backup={app:"equilibrio",version:3,exported:new Date().toISOString(),days:days,meds:meds,members:members,activities:activities,settings:settings,growth:growth};
+    download("equilibrio_respaldo.json",JSON.stringify(backup),"application/json");
+  }
+  function importJSON(el){
+    var file=el.files&&el.files[0]; if(!file)return;
+    var rd=new FileReader();
+    rd.onload=function(){ try{ var b=JSON.parse(rd.result);
+      if(b.days){ days=b.days; persistDays(); }
+      if(b.meds){ meds=b.meds; persist("eq:meds",meds); }
+      if(b.members){ members=b.members; persist("eq:members",members); }
+      if(b.activities){ activities=b.activities; persist("eq:activities",activities); }
+      if(b.settings){ settings=b.settings; persist("eq:settings",settings); }
+      if(b.growth){ growth=b.growth; persistGrowth(); }
+      scheduleReminders(); render(); setTimeout(function(){ flash("#impSaved"); },100);
+    }catch(e){ alert("No pude leer ese archivo de respaldo."); } };
+    rd.readAsText(file);
+  }
+  window.addEventListener("resize",function(){ if(chart)chart.resize(); if(radar)radar.resize(); if(pet3d)pet3d.resize(); });
+  if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){} }
+  boot();
+})();
+</script>
+</body>
+</html>
