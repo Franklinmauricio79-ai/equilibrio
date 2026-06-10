@@ -172,6 +172,8 @@
   .pet-canvas{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:28px;z-index:2}
   .pet-canvas canvas{width:100%!important;height:100%!important;display:block}
   .pet-svg.s-fit .l-bodyfat{transform:scaleX(.9)}
+  .pet-loading{display:flex;align-items:center;justify-content:center;height:100%;font-size:30px;opacity:.45;animation:pawPulse 1.2s ease-in-out infinite}
+  @keyframes pawPulse{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.15);opacity:.6}}
   .pet-svg{width:250px;height:330px;margin-bottom:0;transform-origin:50% 92%;animation:petBob 3.4s ease-in-out infinite;filter:drop-shadow(0 22px 16px rgba(50,28,10,.34))}
   @keyframes petBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(-1deg)}}
   .pet-svg.walk{animation:petWalk 2.4s ease-in-out}
@@ -483,7 +485,7 @@
   function petState(d){ d=d||{}; var fam=0; if(d.familia)for(var k in d.familia)fam+=d.familia[k]||0;
     return {oracion:(d.oracion||0)>0,dormir:(d.sueno||0)>=6,ejercicio:(d.deporte||0)>0,familia:fam>0,lectura:(d.lectura||0)>0,meditacion:(d.meditacion||0)>0,respiracion:(d.respiracion||0)>0}; }
   function petDone(st){ var n=0; for(var i=0;i<PET_KS.length;i++) if(st[PET_KS[i]])n++; return n; }
-  function petClasses(st){ var c=[]; if(st.oracion)c.push('s-aura'); if(!st.ejercicio)c.push('s-fat'); else c.push('s-fit'); if(!st.familia)c.push('s-dimheart'); if(!st.lectura)c.push('s-empty');
+  function petClasses(st){ var c=[]; if(!st.oracion)c.push('s-aura'); if(!st.ejercicio)c.push('s-fat'); else c.push('s-fit'); if(!st.familia)c.push('s-dimheart'); if(!st.lectura)c.push('s-empty');
     if(!st.respiracion)c.push('mood-gasp','s-gasp'); else if(!st.meditacion)c.push('mood-angry','s-angry'); else if(!st.dormir)c.push('mood-tired','s-tired'); else c.push('mood-happy');
     return c.join(' '); }
   function petXP(){ var x=0; for(var k in days) x+=petDone(petState(days[k])); return x; }
@@ -495,7 +497,7 @@
     var d=getDay(todayKey()); var st=petState(d); var cls=petClasses(st); var done=petDone(st);
     var name=esc(settings.petName||"Koa"); var xp=petXP(); var lvl=Math.floor(xp/10)+1; var prog=(xp%10)*10;
     var info=[
-      {k:'oracion',e:'🙏',l:'Oración',ok:'tiene aura ✨',bad:'sin aura'},
+      {k:'oracion',e:'🙏',l:'Oración',ok:'en paz 🙏',bad:'aura te recuerda ✨'},
       {k:'dormir',e:'😴',l:'Dormir 6h+',ok:'descansado',bad:'con ojeras 😪'},
       {k:'ejercicio',e:'💪',l:'Ejercicio',ok:'en forma',bad:'gordito'},
       {k:'familia',e:'❤️',l:'Familia',ok:'corazón vivo',bad:'corazón opaco'},
@@ -547,17 +549,23 @@
     var cont=document.getElementById("petCanvas"); if(!cont)return;
     var st=petState(getDay(todayKey()));
     var scene=document.querySelector(".pet-scene"); if(scene){ var hr=new Date().getHours(); scene.classList.toggle("night", hr>=19||hr<6); }
+    cont.innerHTML='<div class="pet-loading">🐾</div>';
+    if(petDone(st)===7){ setTimeout(function(){ spawnConfetti(); petSpeak("¡Día completo! 🎉"); },500); }
+    tryGLB(cont, function(){ mountSVG(cont,st); });
+  }
+  function mountSVG(cont,st){
+    if(!document.body.contains(cont)) return;
     cont.innerHTML='<div class="pet-svg '+petClasses(st)+'" id="petSvg" style="position:relative;margin:0 auto">'+petSVG()+'</div>';
     setupEyeFollow(); startPetLoop();
-    if(petDone(st)===7){ setTimeout(function(){ spawnConfetti(); petSpeak("¡Día completo! 🎉"); },500); }
-    tryGLB(cont);
   }
 
   /* Koa 3D real: si existe koa.glb junto a la app (versión publicada), se carga con three.js.
      Mide por huesos (los modelos de Meshy traen el tamaño en el esqueleto), refleja el avance
      diario con aura/corazón/pensamiento/burbujas/tinte/velocidad, y cae al Koa vectorial si falla. */
-  function tryGLB(cont){
-    if(window.__glbOff || !window.THREE) return;
+  function tryGLB(cont,onFail){
+    var failed=false;
+    function fail(){ if(failed)return; failed=true; window.__glbOff=true; if(onFail)onFail(); }
+    if(window.__glbOff || !window.THREE){ fail(); return; }
     function start(){
       try{
         var L=new THREE.GLTFLoader();
@@ -577,7 +585,7 @@
             var fill=new THREE.DirectionalLight(0xfff2dd,0.4); fill.position.set(0,1.2,4); scene.add(fill);
 
             var model=g.scene, root=new THREE.Group(); root.add(model); scene.add(root);
-            var mixer=null,action=null,baseSpeed=0.5,sadAmount=0;
+            var mixer=null,action=null,baseSpeed=0.5,sadAmount=0,headSmooth=null;
             if(g.animations&&g.animations.length){ mixer=new THREE.AnimationMixer(model); action=mixer.clipAction(g.animations[0]); action.play(); }
 
             /* Medición por HUESOS (la geometría de Meshy no refleja la escala real) */
@@ -631,7 +639,7 @@
             var sBase=s;
             function setSt(st){
               if(!st)return;
-              aura.visible=!!st.oracion;
+              aura.visible=!st.oracion;   /* aura como recordatorio: se enciende cuando FALTA la oración */
               heartOK.visible=!!st.familia; heartBad.visible=!st.familia;
               thought.visible=!st.lectura;
               bub.visible=!st.respiracion;
@@ -655,7 +663,9 @@
             var stage=document.getElementById('petStage');
             if(stage){ stage.addEventListener('pointermove',function(e){ var rc=stage.getBoundingClientRect(); targRY=(((e.clientX-rc.left)/rc.width)-0.5)*0.9; });
                        stage.addEventListener('pointerleave',function(){ targRY=0; }); }
-            function loop(){ if(dead)return; raf=requestAnimationFrame(loop); var dt=clock.getDelta(); if(mixer)mixer.update(dt); if(headBone&&sadAmount>0) headBone.rotation.x+=sadAmount; root.rotation.y+=(targRY-root.rotation.y)*0.08; ren.render(scene,cam); }
+            function loop(){ if(dead)return; raf=requestAnimationFrame(loop); var dt=clock.getDelta(); if(mixer)mixer.update(dt);
+              if(headBone){ var hb=headBone.rotation.x; if(headSmooth===null)headSmooth=hb; headSmooth+=(hb-headSmooth)*0.12; headBone.rotation.x=headSmooth+sadAmount; }
+              root.rotation.y+=(targRY-root.rotation.y)*0.08; ren.render(scene,cam); }
             loop();
             pet3d={
               setState:setSt,
@@ -666,14 +676,14 @@
               dispose:function(){ dead=true; if(raf)cancelAnimationFrame(raf); try{ren.dispose();}catch(e){} }
             };
             setSt(petState(getDay(todayKey())));
-          }catch(e){ window.__glbOff=true; }
-        },undefined,function(){ window.__glbOff=true; });
-      }catch(e){ window.__glbOff=true; }
+          }catch(e){ fail(); }
+        },undefined,function(){ fail(); });
+      }catch(e){ fail(); }
     }
     if(THREE.GLTFLoader){ start(); return; }
     var sc=document.createElement('script'); sc.src='GLTFLoader.js';
-    sc.onload=function(){ if(THREE.GLTFLoader)start(); else window.__glbOff=true; };
-    sc.onerror=function(){ window.__glbOff=true; };
+    sc.onload=function(){ if(THREE.GLTFLoader)start(); else fail(); };
+    sc.onerror=function(){ fail(); };
     document.head.appendChild(sc);
   }
 
