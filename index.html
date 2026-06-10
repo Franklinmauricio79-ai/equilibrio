@@ -153,6 +153,13 @@
   .b-actions button{padding:13px 26px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
   .b-actions button.fin{background:#fff;color:#1e3a34;border:none}
   .hide{display:none}
+  #rtimer{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 800px at 50% 35%,#3a3050,#171225);display:none;flex-direction:column;align-items:center;justify-content:center;color:#f3edff;padding:30px;text-align:center}
+  #rtimer.show{display:flex}
+  .rt-emoji{font-size:52px;margin-bottom:8px}
+  .rt-time{font-family:'Fraunces',serif;font-size:62px;font-weight:600;letter-spacing:2px}
+  .rt-sub{font-size:14px;color:#b9aede;margin-top:8px}
+  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:#2c2418;color:#ffe9c0;padding:11px 18px;border-radius:14px;font-size:14px;font-weight:600;box-shadow:0 10px 28px rgba(30,18,5,.35);opacity:0;pointer-events:none;transition:.3s;z-index:210;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #rehearse{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 800px at 50% 40%,#2a3a55,#101826);display:none;flex-direction:column;align-items:center;justify-content:center;color:#eaf0f8;padding:30px;text-align:center}
   #rehearse.show{display:flex}
   .rh-step{font-family:'Fraunces',serif;font-size:24px;line-height:1.5;max-width:430px}
@@ -285,6 +292,17 @@
   </div>
 </div>
 
+<!-- Cronómetro de lectura -->
+<div id="rtimer">
+  <div class="rt-emoji">📖</div>
+  <div class="rt-time" id="rtTime">00:00</div>
+  <div class="rt-sub">Leyendo… disfruta tu libro</div>
+  <div class="b-actions">
+    <button id="rtToggle">Pausar</button>
+    <button class="fin" id="rtFin">Terminar</button>
+  </div>
+</div>
+
 <!-- Ensayo mental guiado -->
 <div id="rehearse">
   <div class="rh-step" id="rhStep">…</div>
@@ -333,6 +351,8 @@
   var DEFAULT_SETTINGS={metaMente:30,metaCuerpo:30,metaFamilia:60,metaRespira:10,notif:false,pet3d:true};
 
   function todayKey(){ return offsetKey(0); }
+  var viewDayKey=null;
+  function dayK(){ return viewDayKey||todayKey(); }
   function offsetKey(off){ var d=new Date(); d.setDate(d.getDate()+off); var m=d.getMonth()+1,day=d.getDate(); return d.getFullYear()+"-"+(m<10?"0"+m:m)+"-"+(day<10?"0"+day:day); }
   function fmtToday(){ return new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'}); }
   function uid(p){ return (p||"x")+Date.now()+Math.floor(Math.random()*1000); }
@@ -372,7 +392,7 @@
       tab=b.getAttribute("data-tab");
       var btns=document.querySelectorAll("#nav button"); for(var i=0;i<btns.length;i++) btns[i].classList.toggle("on",btns[i]===b);
       render(); });
-    initBreath(); initLock(); initRehearse();
+    initBreath(); initLock(); initRehearse(); initReadTimer(); applyURLParams();
   }
   function showLock(){ document.getElementById("lock").classList.add("show"); var i=document.getElementById("pinInput"); if(i){ i.value=""; setTimeout(function(){i.focus();},200); } }
   function tryUnlock(){ var i=document.getElementById("pinInput"); var err=document.getElementById("pinErr");
@@ -404,12 +424,25 @@
       '<div class="stepper" data-field="'+field+'" data-step="'+(step||5)+'"><button data-act="dec">−</button>'+
       '<span class="val">'+(d[field]||0)+' <small>min</small></span><button data-act="inc">+</button></div></div>';
   }
+  function fullStreak(){ var s=0; for(var i=0;i<365;i++){ var dd=days[offsetKey(-i)]; var ok=dd&&petDone(petState(dd))===7; if(ok)s++; else { if(i===0)continue; break; } } return s; }
+  function missingList(st){ var NAMES={oracion:'orar',dormir:'dormir',ejercicio:'ejercicio',familia:'familia',lectura:'leer',meditacion:'meditar',respiracion:'respirar'}; var out=[]; for(var i=0;i<PET_KS.length;i++) if(!st[PET_KS[i]]) out.push(NAMES[PET_KS[i]]); return out; }
   function viewHoy(){
-    var d=getDay(todayKey()); var h="";
+    var d=getDay(dayK()); var h="";
+    var isToday=dayK()===todayKey(); var stH=petState(d); var doneH=petDone(stH); var strk=fullStreak();
+    lastDoneCount=doneH;
+    h+='<div class="card" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:10px">'
+      +'<input type="date" id="daySel" value="'+dayK()+'" max="'+todayKey()+'" style="flex:1;min-width:0">'
+      +(isToday?'':'<button class="mini" id="goToday">Volver a hoy</button>')+'</div>'
+      +'<div class="lvlbar" style="margin-top:12px"><i id="dayProgBar" style="width:'+(doneH/7*100)+'%"></i></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">'
+      +'<span class="small-note" id="dayProgTxt">'+doneH+'/7 hábitos'+(isToday&&doneH<7?' · te falta: '+missingList(stH).slice(0,3).join(", "):'')+'</span>'
+      +(strk>0?'<span class="small-note" style="white-space:nowrap">🔥 '+strk+(strk===1?' día':' días')+'</span>':'')
+      +'</div></div>';
 
     // Mente y espíritu
     h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--mente)"></span>Mente & espíritu</div>'+
       minStepper("lectura","Lectura","📖",5)+
+      '<button class="mini" id="readTimerBtn" style="margin:2px 0 8px">⏱️ Cronómetro de lectura</button>'+
       '<div class="collapse" style="margin-top:0;border:none;padding-top:8px">'+
         '<label class="fld">📚 ¿Qué libro estás leyendo?</label>'+
         '<input type="text" id="libroTit" placeholder="Título del libro" value="'+esc(d.libro.titulo)+'">'+
@@ -460,7 +493,7 @@
     var famH="";
     for(var f=0;f<members.length;f++){ var mb=members[f]; var fv=(d.familia[mb.id]||0);
       famH+='<div class="row"><div class="lbl"><span class="ico">'+mb.emoji+'</span><span>'+esc(mb.name)+'<small>'+esc(mb.role)+'</small></span></div>'+
-        '<div class="stepper" data-fam="'+mb.id+'" data-step="10"><button data-act="dec">−</button>'+
+        '<div class="stepper" data-fam="'+mb.id+'" data-step="1"><button data-act="dec">−</button>'+
         '<span class="val">'+fv+' <small>min</small></span><button data-act="inc">+</button></div></div>';
     }
     h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--familia)"></span>Tiempo en familia</div>'+famH+
@@ -485,7 +518,7 @@
   function petState(d){ d=d||{}; var fam=0; if(d.familia)for(var k in d.familia)fam+=d.familia[k]||0;
     return {oracion:(d.oracion||0)>0,dormir:(d.sueno||0)>=6,ejercicio:(d.deporte||0)>0,familia:fam>0,lectura:(d.lectura||0)>0,meditacion:(d.meditacion||0)>0,respiracion:(d.respiracion||0)>0}; }
   function petDone(st){ var n=0; for(var i=0;i<PET_KS.length;i++) if(st[PET_KS[i]])n++; return n; }
-  function petClasses(st){ var c=[]; if(!st.oracion)c.push('s-aura'); if(!st.ejercicio)c.push('s-fat'); else c.push('s-fit'); if(!st.familia)c.push('s-dimheart'); if(!st.lectura)c.push('s-empty');
+  function petClasses(st){ var c=[]; if(st.oracion)c.push('s-aura'); if(!st.ejercicio)c.push('s-fat'); else c.push('s-fit'); if(!st.familia)c.push('s-dimheart'); if(!st.lectura)c.push('s-empty');
     if(!st.respiracion)c.push('mood-gasp','s-gasp'); else if(!st.meditacion)c.push('mood-angry','s-angry'); else if(!st.dormir)c.push('mood-tired','s-tired'); else c.push('mood-happy');
     return c.join(' '); }
   function petXP(){ var x=0; for(var k in days) x+=petDone(petState(days[k])); return x; }
@@ -497,7 +530,7 @@
     var d=getDay(todayKey()); var st=petState(d); var cls=petClasses(st); var done=petDone(st);
     var name=esc(settings.petName||"Koa"); var xp=petXP(); var lvl=Math.floor(xp/10)+1; var prog=(xp%10)*10;
     var info=[
-      {k:'oracion',e:'🙏',l:'Oración',ok:'en paz 🙏',bad:'aura te recuerda ✨'},
+      {k:'oracion',e:'🙏',l:'Oración',ok:'tiene aura ✨',bad:'sin aura'},
       {k:'dormir',e:'😴',l:'Dormir 6h+',ok:'descansado',bad:'con ojeras 😪'},
       {k:'ejercicio',e:'💪',l:'Ejercicio',ok:'en forma',bad:'gordito'},
       {k:'familia',e:'❤️',l:'Familia',ok:'corazón vivo',bad:'corazón opaco'},
@@ -620,6 +653,11 @@
             var heartOK=canvasSprite(emoji('💗'),h*0.18); heartOK.position.set(h*0.16,h*0.34,front); root.add(heartOK);
             var heartBad=canvasSprite(emoji('🤍'),h*0.16); heartBad.material.opacity=0.55; heartBad.position.copy(heartOK.position); root.add(heartBad);
             var thought=canvasSprite(emoji('💭'),h*0.34); thought.position.set(h*0.22,h*1.16,0); root.add(thought);
+            var ojeras=canvasSprite(function(gx){ var gr1=gx.createRadialGradient(36,64,2,36,64,26); gr1.addColorStop(0,'rgba(74,42,110,.85)'); gr1.addColorStop(1,'rgba(74,42,110,0)');
+              gx.fillStyle=gr1; gx.beginPath(); gx.ellipse(36,64,26,13,0,0,7); gx.fill();
+              var gr2=gx.createRadialGradient(92,64,2,92,64,26); gr2.addColorStop(0,'rgba(74,42,110,.85)'); gr2.addColorStop(1,'rgba(74,42,110,0)');
+              gx.fillStyle=gr2; gx.beginPath(); gx.ellipse(92,64,26,13,0,0,7); gx.fill(); }, h*0.42);
+            ojeras.position.set(0,h*0.66,front*0.96); root.add(ojeras);
             var bub=canvasSprite(function(gx){ gx.fillStyle='rgba(170,215,255,.95)';
               gx.beginPath(); gx.arc(46,86,17,0,7); gx.fill(); gx.beginPath(); gx.arc(82,52,12,0,7); gx.fill();
               gx.beginPath(); gx.arc(64,22,8,0,7); gx.fill(); }, h*0.34);
@@ -639,7 +677,11 @@
             var sBase=s;
             function setSt(st){
               if(!st)return;
-              aura.visible=!st.oracion;   /* aura como recordatorio: se enciende cuando FALTA la oración */
+              aura.visible=!!st.oracion;  /* aura encendida cuando la oración está hecha */
+              /* Ojeras progresivas: nada con 7h+, máximas con 1h o menos */
+              var hrs=+((getDay(todayKey())||{}).sueno||0);
+              var oj=hrs>=7?0:Math.min(1,(7-Math.max(hrs,1))/6);
+              ojeras.material.opacity=0.8*oj; ojeras.visible=oj>0.03;
               heartOK.visible=!!st.familia; heartBad.visible=!st.familia;
               thought.visible=!st.lectura;
               bub.visible=!st.respiracion;
@@ -822,6 +864,18 @@
   }
 
   /* ===================== CRECER (herramientas de libros) ===================== */
+  /* Recibe datos desde Atajos de iOS (Salud): equilibrio/?sueno=7.5&deporte=40 */
+  function applyURLParams(){
+    try{
+      var q=window.location.search; if(!q||q.length<2) return;
+      var p={}; q.slice(1).split("&").forEach(function(kv){ var a=kv.split("="); p[decodeURIComponent(a[0])]=decodeURIComponent(a[1]||""); });
+      var d=getDay(todayKey()), msg=[];
+      var sn=parseFloat((p.sueno||"").replace(",",".")); if(!isNaN(sn)&&sn>0&&sn<=16){ d.sueno=Math.round(sn*10)/10; msg.push("sueño "+d.sueno+"h"); }
+      var dp=parseInt(p.deporte,10); if(!isNaN(dp)&&dp>0&&dp<=600){ d.deporte=(d.deporte||0)+dp; msg.push("deporte +"+dp+" min"); }
+      if(msg.length){ persistDays(); setTimeout(function(){ showToast("📲 Desde tu iPhone: "+msg.join(" · ")); checkCelebrate(); },800); }
+      if(window.history&&history.replaceState) history.replaceState(null,"",window.location.pathname);
+    }catch(e){}
+  }
   function persistGrowth(){ persist("eq:growth",growth); }
   function findBook(id){ for(var i=0;i<growth.books.length;i++) if(growth.books[i].id===id) return growth.books[i]; return null; }
   var GMODS=[["habitos","Hábitos"],["mente","Mente"],["flex","Flexibilidad"],["proposito","Propósito"],["disciplina","Disciplina"],["relaciones","Relaciones"],["biblioteca","Biblioteca"],["ritual","Ritual"]];
@@ -1182,22 +1236,25 @@
     var v=document.getElementById("view");
 
     if(tab==="hoy"){
+      bindEl("#daySel","change",function(el){ var k=el.value; if(!k)return; viewDayKey=(k===todayKey())?null:k; render(); });
+      bindEl("#goToday","click",function(){ viewDayKey=null; render(); });
+      bindEl("#readTimerBtn","click",openReadTimer);
       v.querySelectorAll(".stepper[data-field]").forEach(function(s){ var f=s.getAttribute("data-field"),st=+s.getAttribute("data-step");
-        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(dayK()); var c=(d[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
       v.querySelectorAll(".stepper[data-fam]").forEach(function(s){ var f=s.getAttribute("data-fam"),st=+s.getAttribute("data-step");
-        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.familia[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.familia[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(dayK()); var c=(d.familia[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.familia[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
       v.querySelectorAll(".stepper[data-custom]").forEach(function(s){ var f=s.getAttribute("data-custom"),st=+s.getAttribute("data-step");
-        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.custom[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.custom[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(dayK()); var c=(d.custom[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d.custom[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
       v.querySelectorAll(".stepper[data-sleep]").forEach(function(s){ var st=+s.getAttribute("data-step");
-        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(todayKey()); var c=(d.sueno||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; if(c>16)c=16; c=Math.round(c*10)/10; d.sueno=c; s.querySelector(".val").innerHTML=c+' <small>h</small>'; scheduleSave(); }); });
-      bindEl("#depTipo","change",function(el){ getDay(todayKey()).deporteTipo=el.value; scheduleSave(); });
-      bindEl("#peso","input",function(el){ var val=el.value.replace(",","."); getDay(todayKey()).peso=val===""?null:parseFloat(val); scheduleSave(); });
-      bindEl("#libroTit","input",function(el){ getDay(todayKey()).libro.titulo=el.value; scheduleSave(); });
-      bindEl("#libroNota","input",function(el){ getDay(todayKey()).libro.nota=el.value; scheduleSave(); });
-      bindEl("#nota","input",function(el){ getDay(todayKey()).nota=el.value; scheduleSave(); });
-      v.querySelectorAll(".mood").forEach(function(mo){ mo.addEventListener("click",function(){ getDay(todayKey()).animo=+mo.getAttribute("data-mood"); v.querySelectorAll(".mood").forEach(function(o){o.classList.toggle("sel",o===mo);}); scheduleSave(); }); });
-      v.querySelectorAll(".chip[data-emo]").forEach(function(c){ c.addEventListener("click",function(){ var d=getDay(todayKey()),em=c.getAttribute("data-emo"),i=d.emociones.indexOf(em); if(i>=0)d.emociones.splice(i,1); else d.emociones.push(em); c.classList.toggle("sel"); scheduleSave(); }); });
-      v.querySelectorAll(".check[data-med]").forEach(function(ch){ ch.addEventListener("click",function(){ var d=getDay(todayKey()),id=ch.getAttribute("data-med"); d.meds[id]=!d.meds[id]; ch.classList.toggle("on",d.meds[id]); ch.textContent=d.meds[id]?"✓":""; scheduleSave(); }); });
+        s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(dayK()); var c=(d.sueno||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; if(c>16)c=16; c=Math.round(c*10)/10; d.sueno=c; s.querySelector(".val").innerHTML=c+' <small>h</small>'; scheduleSave(); }); });
+      bindEl("#depTipo","change",function(el){ getDay(dayK()).deporteTipo=el.value; scheduleSave(); });
+      bindEl("#peso","input",function(el){ var val=el.value.replace(",","."); getDay(dayK()).peso=val===""?null:parseFloat(val); scheduleSave(); });
+      bindEl("#libroTit","input",function(el){ getDay(dayK()).libro.titulo=el.value; scheduleSave(); });
+      bindEl("#libroNota","input",function(el){ getDay(dayK()).libro.nota=el.value; scheduleSave(); });
+      bindEl("#nota","input",function(el){ getDay(dayK()).nota=el.value; scheduleSave(); });
+      v.querySelectorAll(".mood").forEach(function(mo){ mo.addEventListener("click",function(){ getDay(dayK()).animo=+mo.getAttribute("data-mood"); v.querySelectorAll(".mood").forEach(function(o){o.classList.toggle("sel",o===mo);}); scheduleSave(); }); });
+      v.querySelectorAll(".chip[data-emo]").forEach(function(c){ c.addEventListener("click",function(){ var d=getDay(dayK()),em=c.getAttribute("data-emo"),i=d.emociones.indexOf(em); if(i>=0)d.emociones.splice(i,1); else d.emociones.push(em); c.classList.toggle("sel"); scheduleSave(); }); });
+      v.querySelectorAll(".check[data-med]").forEach(function(ch){ ch.addEventListener("click",function(){ var d=getDay(dayK()),id=ch.getAttribute("data-med"); d.meds[id]=!d.meds[id]; ch.classList.toggle("on",d.meds[id]); ch.textContent=d.meds[id]?"✓":""; scheduleSave(); }); });
       bindEl("#openBreath","click",function(){ openBreath(); });
       bindEl("#saveBtn","click",function(){ persistDays(); flash("#savedMsg"); });
     }
@@ -1295,7 +1352,21 @@
   function bindEl(sel,ev,fn){ var el=document.querySelector(sel); if(el) el.addEventListener(ev,function(){ fn(el); }); }
   function val(sel){ var el=document.querySelector(sel); return el?el.value.trim():""; }
   function flash(sel){ var m=document.querySelector(sel); if(!m)return; m.classList.add("show"); setTimeout(function(){m.classList.remove("show");},1800); }
-  function scheduleSave(){ clearTimeout(saveT); saveT=setTimeout(function(){ persistDays(); flash("#savedMsg"); },500); }
+  var lastDoneCount=null;
+  function showToast(msg){ var t=document.getElementById("toast"); if(!t){ t=document.createElement("div"); t.id="toast"; document.body.appendChild(t); } t.textContent=msg; t.className="show"; clearTimeout(t._t); t._t=setTimeout(function(){ t.className=""; },2400); }
+  function bodyConfetti(){ var cols=["#5FA382","#E0A92E","#C4577A","#6C7BD1","#D9794E"]; for(var i=0;i<30;i++){ (function(){ var c=document.createElement("span"); c.className="confetti"; c.style.position="fixed"; c.style.zIndex=200; c.style.left=(Math.random()*100)+"%"; c.style.top="-16px"; c.style.background=cols[Math.floor(Math.random()*cols.length)]; var dur=1.3+Math.random()*1.3; c.style.animationDuration=dur+"s"; c.style.animationDelay=(Math.random()*0.3)+"s"; document.body.appendChild(c); setTimeout(function(){ if(c.parentNode)c.parentNode.removeChild(c); },(dur+0.6)*1000); })(); } }
+  function checkCelebrate(){
+    var done=petDone(petState(getDay(dayK())));
+    var bar=document.getElementById("dayProgBar"), txt=document.getElementById("dayProgTxt");
+    if(bar)bar.style.width=(done/7*100)+"%";
+    if(txt)txt.textContent=done+"/7 hábitos";
+    if(lastDoneCount!==null && done>lastDoneCount){
+      if(done===7){ bodyConfetti(); showToast("🎉 ¡Día completo! Koa está feliz"); }
+      else showToast("✅ ¡Hábito logrado! "+done+"/7 — Koa lo siente 🐥");
+    }
+    if(lastDoneCount===null || done!==lastDoneCount) lastDoneCount=done;
+  }
+  function scheduleSave(){ clearTimeout(saveT); saveT=setTimeout(function(){ persistDays(); flash("#savedMsg"); checkCelebrate(); },500); }
 
   /* ===================== RESPIRACIÓN 7-6-7-6 ===================== */
   var bPhases=[{n:"Inhala",d:7,s:1.55},{n:"Sostén",d:6,s:1.55},{n:"Exhala",d:7,s:0.7},{n:"Sostén",d:6,s:0.7}];
@@ -1331,6 +1402,24 @@
     var mins=Math.round(bState.total/60);
     if(mins>0){ var d=getDay(todayKey()); d.respiracion=(d.respiracion||0)+mins; persistDays(); }
     if(tab==="hoy")render();
+  }
+
+  /* ===================== CRONÓMETRO DE LECTURA ===================== */
+  var rtState={sec:0,running:true,timer:null};
+  function initReadTimer(){
+    document.getElementById("rtToggle").addEventListener("click",function(){ rtState.running=!rtState.running; this.textContent=rtState.running?"Pausar":"Reanudar"; });
+    document.getElementById("rtFin").addEventListener("click",closeReadTimer);
+  }
+  function openReadTimer(){ rtState={sec:0,running:true,timer:null}; document.getElementById("rtToggle").textContent="Pausar"; rtPaint(); document.getElementById("rtimer").classList.add("show"); rtState.timer=setInterval(function(){ if(rtState.running){ rtState.sec++; rtPaint(); } },1000); }
+  function rtPaint(){ var m=Math.floor(rtState.sec/60), s=rtState.sec%60; document.getElementById("rtTime").textContent=(m<10?"0":"")+m+":"+(s<10?"0":"")+s; }
+  function closeReadTimer(){
+    if(rtState.timer)clearInterval(rtState.timer);
+    document.getElementById("rtimer").classList.remove("show");
+    var mins=Math.round(rtState.sec/60);
+    if(mins>=1){
+      if(confirm("Leíste "+mins+" min. ¿Los agrego a tu lectura?")){ var d=getDay(dayK()); d.lectura=(d.lectura||0)+mins; persistDays(); checkCelebrate(); if(tab==="hoy")render(); showToast("📖 +"+mins+" min de lectura"); }
+      else showToast("Sin problema, agrégalos manualmente cuando quieras");
+    }
   }
 
   /* ===================== ENSAYO MENTAL ===================== */
