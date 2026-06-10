@@ -513,7 +513,6 @@
       '<button class="btn btn-soft" id="renamePet" style="width:auto;padding:8px 12px;margin:0">✏️ Nombre</button></div>'+
       '<div class="lvlbar"><i style="width:'+prog+'%"></i></div>'+
       '<button class="btn btn-mente" id="exploreBtn" style="margin-top:14px'+(done>=4?'':';opacity:.5')+'">🧭 Salir a explorar</button>'+
-      '<button class="btn btn-soft" id="toggle3d" style="margin-top:8px">'+(settings.pet3d?'🎨 Ver Koa dibujado (2D)':'🧸 Ver Koa 3D')+'</button>'+
       '<div class="small-note">Toca a '+name+' para acariciarlo 🥰. Crece y sale a explorar cuando cuidas tus hábitos. Es una mascota original (no un personaje con derechos de autor).</div></div>';
     h+='<div class="card"><div class="sec-label">¿Cómo está '+name+' hoy?</div><div class="pet-status">'+status+'</div>'+
       '<div class="small-note">Completa lo que falta en ✍️ Hoy y mírala cambiar aquí.</div></div>';
@@ -551,7 +550,7 @@
     cont.innerHTML='<div class="pet-svg '+petClasses(st)+'" id="petSvg" style="position:relative;margin:0 auto">'+petSVG()+'</div>';
     setupEyeFollow(); startPetLoop();
     if(petDone(st)===7){ setTimeout(function(){ spawnConfetti(); petSpeak("¡Día completo! 🎉"); },500); }
-    if(settings.pet3d) tryGLB(cont); else tryRive(cont);
+    tryGLB(cont);
   }
 
   /* Koa 3D real: si existe koa.glb junto a la app (versión publicada), se carga con three.js.
@@ -578,7 +577,7 @@
             var fill=new THREE.DirectionalLight(0xfff2dd,0.4); fill.position.set(0,1.2,4); scene.add(fill);
 
             var model=g.scene, root=new THREE.Group(); root.add(model); scene.add(root);
-            var mixer=null,action=null,baseSpeed=0.5;
+            var mixer=null,action=null,baseSpeed=0.5,sadAmount=0;
             if(g.animations&&g.animations.length){ mixer=new THREE.AnimationMixer(model); action=mixer.clipAction(g.animations[0]); action.play(); }
 
             /* Medición por HUESOS (la geometría de Meshy no refleja la escala real) */
@@ -619,12 +618,14 @@
             bub.position.set(h*0.30,h*0.74,front*0.85); root.add(bub);
 
             /* Tinte emotivo sobre los materiales */
-            var mats=[]; model.traverse(function(o){ if(o.isMesh&&o.material){
+            var mats=[], allMats=[]; model.traverse(function(o){ if(o.isMesh&&o.material){
               if(o.material.metalness!==undefined) o.material.metalness=0.0;       /* sin metal: evita manchas negras */
               if(o.material.roughness!==undefined) o.material.roughness=Math.max(o.material.roughness,0.85); /* mate, look peluche */
               o.material.transparent=false; o.material.opacity=1; o.material.depthWrite=true; o.material.alphaTest=0; /* opaco: el aura no atraviesa */
               o.material.needsUpdate=true;
+              allMats.push(o.material);
               if(o.material.emissive) mats.push(o.material); } });
+            var headBone=null; model.traverse(function(o){ if(!headBone&&o.isBone&&/head/i.test(o.name||"")) headBone=o; });
             function tint(hex,inten){ for(var i=0;i<mats.length;i++){ mats[i].emissive.setHex(hex); mats[i].emissiveIntensity=inten; } }
 
             var sBase=s;
@@ -637,9 +638,13 @@
               if(!st.respiracion) tint(0x4a2a86,0.22);          /* morado: le falta el aire */
               else if(!st.meditacion) tint(0x6e1414,0.18);      /* rojizo: enojado sin meditar */
               else tint(0x000000,0);
-              baseSpeed = st.dormir ? (st.ejercicio?0.55:0.45) : 0.3;  /* cansado camina lento */
-              if(action) action.timeScale=baseSpeed;
-              root.rotation.x = st.dormir ? 0 : 0.05;           /* ojeras: se encorva un poquito */
+              /* Tristeza progresiva: entre más hábitos falten, más decaído */
+              var miss=0; for(var i=0;i<PET_KS.length;i++) if(!st[PET_KS[i]]) miss++;
+              var sad=miss/PET_KS.length;
+              sadAmount=sad*0.5;                                 /* la cabeza se agacha (hueso del cuello) */
+              baseSpeed=0.62-sad*0.34; if(action) action.timeScale=baseSpeed;  /* camina más lento */
+              root.rotation.x=0.02+sad*0.10;                     /* se encorva */
+              for(var j=0;j<allMats.length;j++){ if(allMats[j].color) allMats[j].color.setRGB(1-sad*0.32,1-sad*0.30,1-sad*0.20); } /* colores se apagan */
               var fx = st.ejercicio ? 0.96 : 1.14;              /* gordito si no hay ejercicio */
               model.scale.set(sBase*fx, sBase, sBase*fx);
             }
@@ -650,7 +655,7 @@
             var stage=document.getElementById('petStage');
             if(stage){ stage.addEventListener('pointermove',function(e){ var rc=stage.getBoundingClientRect(); targRY=(((e.clientX-rc.left)/rc.width)-0.5)*0.9; });
                        stage.addEventListener('pointerleave',function(){ targRY=0; }); }
-            function loop(){ if(dead)return; raf=requestAnimationFrame(loop); var dt=clock.getDelta(); if(mixer)mixer.update(dt); root.rotation.y+=(targRY-root.rotation.y)*0.08; ren.render(scene,cam); }
+            function loop(){ if(dead)return; raf=requestAnimationFrame(loop); var dt=clock.getDelta(); if(mixer)mixer.update(dt); if(headBone&&sadAmount>0) headBone.rotation.x+=sadAmount; root.rotation.y+=(targRY-root.rotation.y)*0.08; ren.render(scene,cam); }
             loop();
             pet3d={
               setState:setSt,
@@ -1192,7 +1197,6 @@
     if(tab==="mascota"){
       var stage=document.getElementById("petStage"); if(stage) stage.addEventListener("click",petTapHandler);
       bindEl("#exploreBtn","click",petExplore);
-      bindEl("#toggle3d","click",function(){ settings.pet3d=!settings.pet3d; persist("eq:settings",settings); render(); });
       bindEl("#renamePet","click",function(){ var n=prompt("¿Cómo se llama tu mascota?", settings.petName||"Koa"); if(n!==null){ n=n.trim().slice(0,18); if(n){ settings.petName=n; persist("eq:settings",settings); render(); } } });
       mountPet();
     }
