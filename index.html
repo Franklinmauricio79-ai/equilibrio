@@ -133,6 +133,14 @@
   .mini:disabled{opacity:.35}
   .btn:active{transform:scale(.97)}
   .check:active{transform:scale(.88)}
+  .sec-acc{padding-top:13px;padding-bottom:13px}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
+  .sec-chip{font-size:11.5px;font-weight:700;color:var(--muted);background:#F3EDDE;border:1px solid var(--line);padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .sec-chip.full{color:#fff;background:var(--salud);border-color:var(--salud)}
+  .sec-arr{font-size:12px;color:var(--muted);transition:transform .18s;transform:rotate(-90deg)}
+  .sec-arr.open{transform:rotate(0deg)}
+  .sec-body{margin-top:10px}
+  .sec-body.hid{display:none}
   nav.tabs button.on{color:var(--ink)}
 
   .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px}
@@ -289,11 +297,9 @@
 
 <nav class="tabs" id="nav">
   <button data-tab="hoy" class="on"><span class="ti">✍️</span><span class="tl">Hoy</span></button>
-  <button data-tab="mascota"><span class="ti">🐾</span><span class="tl">Mascota</span></button>
-  <button data-tab="balance"><span class="ti">🧭</span><span class="tl">Balance</span></button>
+  <button data-tab="mascota"><span class="ti">🐾</span><span class="tl">Koa</span></button>
   <button data-tab="crecer"><span class="ti">🌱</span><span class="tl">Crecer</span></button>
-  <button data-tab="graficas"><span class="ti">📈</span><span class="tl">Gráficas</span></button>
-  <button data-tab="medicinas"><span class="ti">💊</span><span class="tl">Medicina</span></button>
+  <button data-tab="progreso"><span class="ti">📊</span><span class="tl">Progreso</span></button>
   <button data-tab="mas"><span class="ti">⚙️</span><span class="tl">Más</span></button>
 </nav>
 
@@ -456,9 +462,7 @@
     if(tab==="hoy")v.innerHTML=viewHoy();
     else if(tab==="mascota")v.innerHTML=viewMascota();
     else if(tab==="crecer")v.innerHTML=viewCrecer();
-    else if(tab==="balance")v.innerHTML=viewBalance();
-    else if(tab==="graficas")v.innerHTML=viewGraficas();
-    else if(tab==="medicinas")v.innerHTML=viewMedicinas();
+    else if(tab==="progreso")v.innerHTML=viewProgreso();
     else if(tab==="mas")v.innerHTML=viewMas();
     bind();
   }
@@ -470,12 +474,23 @@
       '<div class="stepper" data-field="'+field+'" data-step="'+(step||5)+'"><button data-act="dec">−</button>'+
       '<span class="val">'+(d[field]||0)+' <small>min</small></span><button data-act="inc">+</button></div></div>';
   }
+  var secOpen={};
+  function secCard(key,color,emoji,title,chip,full,body){
+    var open=!!secOpen[key];
+    return '<div class="card sec-acc">'+
+      '<div class="sec-head" data-sec="'+key+'">'+
+        '<div class="sec-label" style="margin:0"><span class="dot" style="background:'+color+'"></span>'+emoji+' '+title+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px"><span class="sec-chip'+(full?' full':'')+'">'+chip+'</span><span class="sec-arr'+(open?' open':'')+'">▾</span></div>'+
+      '</div>'+
+      '<div class="sec-body'+(open?'':' hid')+'">'+body+'</div></div>';
+  }
   function fullStreak(){ var s=0; for(var i=0;i<365;i++){ var dd=days[offsetKey(-i)]; var ok=dd&&petDone(petState(dd))===7; if(ok)s++; else { if(i===0)continue; break; } } return s; }
   function missingList(st){ var NAMES={oracion:'orar',dormir:'dormir',ejercicio:'ejercicio',familia:'familia',lectura:'leer',meditacion:'meditar',respiracion:'respirar'}; var out=[]; for(var i=0;i<PET_KS.length;i++) if(!st[PET_KS[i]]) out.push(NAMES[PET_KS[i]]); return out; }
   function viewHoy(){
     var d=getDay(dayK()); var h="";
     var isToday=dayK()===todayKey(); var stH=petState(d); var doneH=petDone(stH); var strk=fullStreak();
     lastDoneCount=doneH;
+    var menteN=(d.lectura>0?1:0)+(d.meditacion>0?1:0)+(d.oracion>0?1:0)+(d.respiracion>0?1:0);
     var hrG=new Date().getHours(); var saludo=hrG<12?"¡Buenos días! ☀️":(hrG<19?"¡Buenas tardes! 🌤️":"¡Buenas noches! 🌙");
     var FRASES=["Pequeños pasos, gran cambio 🌱","Hoy votas por quien quieres ser 🗳️","Tu constancia construye tu calma 🧘","Un día a la vez, con cariño 💛","Lo que cuidas, crece 🌿","Hecho es mejor que perfecto ✨","Tu familia siente tu presencia 👨‍👩‍👦","Respira: estás avanzando 🌬️","Cada hábito alimenta a Koa 🐥","La disciplina es amor propio 🔥"];
     var fr=FRASES[parseInt(dayK().replace(/-/g,""),10)%FRASES.length];
@@ -494,7 +509,7 @@
       +'</div></div>';
 
     // Mente y espíritu
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--mente)"></span>Mente & espíritu</div>'+
+    h+=secCard('mente','var(--mente)','🧠','Mente & espíritu',menteN+'/4',menteN===4,
       minStepper("lectura","Lectura","📖",5)+
       '<button class="mini" id="readTimerBtn" style="margin:2px 0 8px">⏱️ Cronómetro de lectura</button>'+
       '<div class="collapse" style="margin-top:0;border:none;padding-top:8px">'+
@@ -506,42 +521,42 @@
       minStepper("meditacion","Meditación","🧘",5)+
       minStepper("oracion","Oración","🙏",5)+
       minStepper("respiracion","Respiración","🌬️",1)+
-      '<button class="btn btn-mente" id="openBreath" style="margin-top:12px">🌬️ Iniciar guía de respiración 7·6·7·6</button>'+
-    '</div>';
+      '<button class="btn btn-mente" id="openBreath" style="margin-top:12px">🌬️ Iniciar guía de respiración 7·6·7·6</button>');
 
     // Otros hábitos personalizados
     if(activities.length){
-      var hb="";
-      for(var a=0;a<activities.length;a++){ var ac=activities[a]; var val=(d.custom[ac.id]||0);
+      var hb="",otrosN=0;
+      for(var a=0;a<activities.length;a++){ var ac=activities[a]; var val=(d.custom[ac.id]||0); if(val>0)otrosN++;
         hb+='<div class="row"><div class="lbl"><span class="ico">'+ac.emoji+'</span>'+esc(ac.name)+'</div>'+
           '<div class="stepper" data-custom="'+ac.id+'" data-step="5"><button data-act="dec">−</button>'+
           '<span class="val">'+val+' <small>min</small></span><button data-act="inc">+</button></div></div>';
       }
-      h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--mente)"></span>Otros hábitos</div>'+hb+'</div>';
+      h+=secCard('otros','var(--mente)','✨','Otros hábitos',otrosN+'/'+activities.length,otrosN>0&&otrosN===activities.length,hb);
     }
 
     // Cuerpo
     var opts=""; for(var i=0;i<DEPORTES.length;i++) opts+='<option'+(d.deporteTipo===DEPORTES[i]?' selected':'')+'>'+DEPORTES[i]+'</option>';
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--cuerpo)"></span>Cuerpo</div>'+
+    h+=secCard('cuerpo','var(--cuerpo)','💪','Cuerpo',(d.deporte>0?d.deporte+' min':'0 min'),d.deporte>0,
       minStepper("deporte","Deporte","💪",5)+
       '<div style="padding:11px 0;border-bottom:1px dashed var(--line)"><label class="fld">¿Qué deporte / actividad?</label>'+
         '<select id="depTipo"><option value="">Seleccionar…</option>'+opts+'</select></div>'+
       '<div style="padding-top:11px"><label class="fld">Peso (kg)</label>'+
         '<input type="number" step="0.1" id="peso" placeholder="Ej: 84,5" value="'+(d.peso!=null?d.peso:"")+'">'+
-        '<div class="small-note">Sugerencia: pésate 1–2 veces por semana, a la misma hora. Lo que importa es la tendencia, no el número de un día.</div></div></div>';
+        '<div class="small-note">Sugerencia: pésate 1–2 veces por semana, a la misma hora. Lo que importa es la tendencia, no el número de un día.</div></div>');
 
     // Descanso
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:#7E8FE0"></span>Descanso</div>'+
+    h+=secCard('descanso','#7E8FE0','😴','Descanso',(d.sueno?d.sueno+' h':'0 h'),(+d.sueno||0)>=6,
       '<div class="row"><div class="lbl"><span class="ico">😴</span>Horas dormidas</div>'+
       '<div class="stepper" data-sleep="1" data-step="0.5"><button data-act="dec">−</button>'+
-      '<span class="val">'+(d.sueno||0)+' <small>h</small></span><button data-act="inc">+</button></div></div></div>';
+      '<span class="val">'+(d.sueno||0)+' <small>h</small></span><button data-act="inc">+</button></div></div>');
 
     // Ánimo + emociones
     var moodsH=""; for(var j=0;j<MOODS.length;j++){ var m=MOODS[j]; moodsH+='<div class="mood'+(d.animo===m.v?' sel':'')+'" data-mood="'+m.v+'"><span class="e">'+m.e+'</span><span class="t">'+m.t+'</span></div>'; }
     var chipsH=""; for(var e=0;e<EMOCIONES.length;e++){ var sel=d.emociones.indexOf(EMOCIONES[e])>=0; chipsH+='<span class="chip'+(sel?' sel':'')+'" data-emo="'+EMOCIONES[e]+'">'+EMOCIONES[e]+'</span>'; }
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--emo)"></span>Estado de ánimo</div>'+
+    var moodE='–'; for(var mj=0;mj<MOODS.length;mj++) if(MOODS[mj].v===d.animo)moodE=MOODS[mj].e;
+    h+=secCard('animo','var(--emo)','😊','Estado de ánimo',moodE,d.animo!=null,
       '<div class="moods">'+moodsH+'</div>'+
-      '<label class="fld" style="margin-top:16px">¿Qué emociones sentiste hoy?</label><div class="chips">'+chipsH+'</div></div>';
+      '<label class="fld" style="margin-top:16px">¿Qué emociones sentiste hoy?</label><div class="chips">'+chipsH+'</div>');
 
     // Familia (miembros)
     var famH="";
@@ -550,18 +565,19 @@
         '<div class="stepper" data-fam="'+mb.id+'" data-step="1"><button data-act="dec">−</button>'+
         '<span class="val">'+fv+' <small>min</small></span><button data-act="inc">+</button></div></div>';
     }
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--familia)"></span>Tiempo en familia</div>'+famH+
-      '<div class="small-note">Para agregar o editar personas ve a la pestaña ⚙️ Más.</div></div>';
+    var famTot=0; for(var ft2 in (d.familia||{})) famTot+=(+d.familia[ft2]||0);
+    h+=secCard('familia','var(--familia)','❤️','Tiempo en familia',famTot+' min',famTot>0,famH+
+      '<div class="small-note">Para agregar o editar personas ve a ⚙️ Más.</div>');
 
     // Medicinas
-    var medsH="";
-    if(meds.length===0) medsH='<div class="empty">Aún no agregas medicinas. Ve a 💊 Medicina.</div>';
+    var medsH="",medT=0,medD=0;
+    if(meds.length===0) medsH='<div class="empty">Aún no agregas medicinas. Configúralas en ⚙️ Más.</div>';
     else { var anyDue=false;
-      for(var k=0;k<meds.length;k++){ var md=meds[k]; if(!medDueOn(md,dayK()))continue; anyDue=true; var on=!!d.meds[md.id];
+      for(var k=0;k<meds.length;k++){ var md=meds[k]; if(!medDueOn(md,dayK()))continue; anyDue=true; var on=!!d.meds[md.id]; medT++; if(on)medD++;
         medsH+='<div class="med"><div class="check'+(on?' on':'')+'" data-med="'+md.id+'">'+(on?'✓':'')+'</div>'+
           '<div class="info"><div class="n">'+esc(md.nombre)+'</div><div class="h">'+(md.hora?'🕐 '+md.hora:'')+(md.dosis?' · '+esc(md.dosis):'')+'</div></div></div>'; }
       if(!anyDue) medsH='<div class="empty">Hoy no corresponde ninguna medicina 💚</div>'; }
-    h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--salud)"></span>Medicinas de hoy</div>'+medsH+'</div>';
+    h+=secCard('meds','var(--salud)','💊','Medicinas',(medT?medD+'/'+medT:'–'),medT>0&&medD===medT,medsH);
 
     h+='<div class="card"><label class="fld">Nota del día (opcional)</label>'+
       '<textarea id="nota" placeholder="¿Cómo te fue hoy? Algo que quieras recordar…">'+esc(d.nota||"")+'</textarea></div>';
@@ -1209,6 +1225,13 @@
     return h;
   }
 
+  var curProg="balance";
+  function viewProgreso(){
+    var seg='<div class="seg" id="progSeg" style="margin-bottom:14px">'+
+      '<button data-pg="balance" class="'+(curProg==="balance"?'on':'')+'">🧭 Balance</button>'+
+      '<button data-pg="graficas" class="'+(curProg==="graficas"?'on':'')+'">📈 Gráficas</button></div>';
+    return seg+(curProg==="graficas"?viewGraficas():viewBalance());
+  }
   function streaks7(){
     var o={mente:0,cuerpo:0,familia:0,respira:0,med:0};
     for(var i=0;i<7;i++){ var d=days[offsetKey(-i)]; if(!d)continue;
@@ -1320,7 +1343,7 @@
 
   /* ===================== MÁS (ajustes) ===================== */
   function viewMas(){
-    var h="";
+    var h=viewMedicinas();
     // metas
     h+='<div class="card"><h2>Metas diarias</h2><div class="sub">Definen el llenado del radar de equilibrio. Mejor metas pequeñas y sostenibles que altas e imposibles.</div>'+
       metaInput("metaMente","Mente & espíritu (min)")+metaInput("metaCuerpo","Cuerpo / deporte (min)")+metaInput("metaFamilia","Familia (min)")+metaInput("metaRespira","Respiración (min)")+
@@ -1360,7 +1383,7 @@
         ? '<div class="item-line"><span class="e">🔒</span><span class="n">PIN activado</span><button class="btn btn-soft" id="rmPin" style="width:auto;padding:8px 14px;margin:0">Quitar PIN</button></div>'
         : '<div class="addbar"><input type="text" id="newPin" inputmode="numeric" pattern="\\d*" maxlength="4" placeholder="PIN de 4 dígitos"></div><button class="btn btn-ghost" id="setPin" style="margin-top:10px">Activar PIN</button>')+
       '<div class="small-note">El PIN es un candado básico para que alguien que tome tu teléfono no entre de una. No cifra los datos; para privacidad fuerte, suma el bloqueo de pantalla del propio iPhone.</div></div>';
-    return h+'<div class="small-note" style="text-align:center;opacity:.6;margin:8px 0 2px">Equilibrio v11 🌱</div>';
+    return h+'<div class="small-note" style="text-align:center;opacity:.6;margin:8px 0 2px">Equilibrio v12 🌱</div>';
   }
   function metaInput(key,label){ return '<label class="fld">'+label+'</label><input type="number" data-meta="'+key+'" value="'+(settings[key]||0)+'" style="margin-bottom:12px">'; }
 
@@ -1375,6 +1398,12 @@
       bindEl("#dayNext","click",function(){ setViewDay(shiftKey(dayK(),1)); });
       bindEl("#goToday","click",function(){ viewDayKey=null; render(); });
       bindEl("#sosBtn","click",openSOS);
+      v.querySelectorAll(".sec-head").forEach(function(hd){ hd.addEventListener("click",function(ev){
+        if(ev.target.closest("button,input,select,textarea"))return;
+        var key=hd.getAttribute("data-sec"); secOpen[key]=!secOpen[key];
+        var body=hd.parentNode.querySelector(".sec-body"), arr=hd.querySelector(".sec-arr");
+        if(body)body.classList.toggle("hid",!secOpen[key]); if(arr)arr.classList.toggle("open",secOpen[key]);
+      }); });
       bindEl("#readTimerBtn","click",openReadTimer);
       v.querySelectorAll(".stepper[data-field]").forEach(function(s){ var f=s.getAttribute("data-field"),st=+s.getAttribute("data-step");
         s.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; var d=getDay(dayK()); var c=(d[f]||0)+(b.getAttribute("data-act")==="inc"?st:-st); if(c<0)c=0; d[f]=c; s.querySelector(".val").innerHTML=c+' <small>min</small>'; scheduleSave(); }); });
@@ -1396,7 +1425,10 @@
       bindEl("#saveBtn","click",function(){ persistDays(); flash("#savedMsg"); });
     }
 
-    if(tab==="balance"){ setTimeout(drawRadar,40); bindEl("#aiBtn","click",runAI); }
+    if(tab==="progreso"){
+      var pseg=document.getElementById("progSeg"); if(pseg) pseg.addEventListener("click",function(e){ var b=e.target.closest("button[data-pg]"); if(!b)return; curProg=b.getAttribute("data-pg"); if(chart){chart.dispose();chart=null;} render(); });
+    }
+    if(tab==="progreso"&&curProg==="balance"){ setTimeout(drawRadar,40); bindEl("#aiBtn","click",runAI); }
 
     if(tab==="mascota"){
       var stage=document.getElementById("petStage"); if(stage) stage.addEventListener("click",petTapHandler);
@@ -1466,13 +1498,13 @@
       bindEl("#wFocus","input",function(el){ growth.weekly.focus=el.value; growth.weekly.date=offsetKey(0).slice(5); persistGrowth(); flash("#wkSaved"); });
     }
 
-    if(tab==="graficas"){
+    if(tab==="progreso"&&curProg==="graficas"){
       bindEl("#metricSel","change",function(el){ curMetric=el.value; if(chart){chart.dispose();chart=null;} drawChart(); });
       var seg=v.querySelector("#perSeg"); if(seg) seg.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b)return; curPeriod=b.getAttribute("data-per"); v.querySelectorAll("#perSeg button").forEach(function(x){x.classList.toggle("on",x===b);}); if(chart){chart.dispose();chart=null;} drawChart(); });
       setTimeout(drawChart,40);
     }
 
-    if(tab==="medicinas"){
+    if(tab==="mas"){ /* medicinas ahora viven en Más */
       bindEl("#addMed","click",function(){ var n=val("#mNombre"); if(!n)return;
         var obj={id:editMedId||uid("m"),nombre:n,hora:val("#mHora"),dosis:val("#mDosis"),inicio:val("#mInicio")||todayKey(),fin:val("#mFin"),cada:Math.max(1,parseInt(val("#mCada"),10)||1)};
         if(editMedId){ for(var i=0;i<meds.length;i++) if(meds[i].id===editMedId){ meds[i]=obj; break; } editMedId=null; }
