@@ -129,6 +129,10 @@
   nav.tabs button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 3px;cursor:pointer;color:var(--muted);font-family:inherit;transition:.15s;flex:1}
   nav.tabs button .ti{font-size:19px}.nav.tabs button .tl{font-size:10px}
   nav.tabs button .tl{font-size:9.5px;font-weight:600}
+  nav.tabs button.on{background:rgba(108,123,209,.12);border-radius:14px}
+  .mini:disabled{opacity:.35}
+  .btn:active{transform:scale(.97)}
+  .check:active{transform:scale(.88)}
   nav.tabs button.on{color:var(--ink)}
 
   .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 10px}
@@ -153,6 +157,10 @@
   .b-actions button{padding:13px 26px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
   .b-actions button.fin{background:#fff;color:#1e3a34;border:none}
   .hide{display:none}
+  #rtAsk{position:fixed;inset:0;z-index:130;background:rgba(28,22,14,.55);display:none;align-items:center;justify-content:center;padding:24px}
+  #rtAsk.show{display:flex}
+  .ask-card{background:#FFFDF7;border-radius:20px;padding:26px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(30,20,5,.35)}
+  .ask-txt{font-family:'Fraunces',serif;font-size:18px;margin-top:8px;line-height:1.4;color:#2C2A24}
   #rtimer{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 800px at 50% 35%,#3a3050,#171225);display:none;flex-direction:column;align-items:center;justify-content:center;color:#f3edff;padding:30px;text-align:center}
   #rtimer.show{display:flex}
   .rt-emoji{font-size:52px;margin-bottom:8px}
@@ -303,6 +311,9 @@
   </div>
 </div>
 
+<!-- Pregunta del cronómetro -->
+<div id="rtAsk"><div class="ask-card"><div style="font-size:42px">📖</div><div class="ask-txt" id="rtAskTxt"></div><div class="b-actions" style="margin-top:18px"><button class="fin" id="rtYes">Sí, agregar</button><button id="rtNo">No, manual</button></div></div></div>
+
 <!-- Ensayo mental guiado -->
 <div id="rehearse">
   <div class="rh-step" id="rhStep">…</div>
@@ -353,6 +364,16 @@
   function todayKey(){ return offsetKey(0); }
   var viewDayKey=null;
   function dayK(){ return viewDayKey||todayKey(); }
+  function shiftKey(k,n){ var dt=new Date(k+"T12:00:00"); dt.setDate(dt.getDate()+n); return dt.getFullYear()+"-"+("0"+(dt.getMonth()+1)).slice(-2)+"-"+("0"+dt.getDate()).slice(-2); }
+  function setViewDay(k){ if(!k)return; if(k>todayKey())k=todayKey(); viewDayKey=(k===todayKey())?null:k; render(); }
+  function dayDiff(a,b){ return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000); }
+  function medDueOn(m,key){
+    if(m.inicio && key<m.inicio) return false;
+    if(m.fin && key>m.fin) return false;
+    var cada=parseInt(m.cada,10)||1; if(cada<=1) return true;
+    if(!m.inicio) return true;
+    return dayDiff(m.inicio,key)%cada===0;
+  }
   function offsetKey(off){ var d=new Date(); d.setDate(d.getDate()+off); var m=d.getMonth()+1,day=d.getDate(); return d.getFullYear()+"-"+(m<10?"0"+m:m)+"-"+(day<10?"0"+day:day); }
   function fmtToday(){ return new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'}); }
   function uid(p){ return (p||"x")+Date.now()+Math.floor(Math.random()*1000); }
@@ -430,9 +451,17 @@
     var d=getDay(dayK()); var h="";
     var isToday=dayK()===todayKey(); var stH=petState(d); var doneH=petDone(stH); var strk=fullStreak();
     lastDoneCount=doneH;
-    h+='<div class="card" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:10px">'
-      +'<input type="date" id="daySel" value="'+dayK()+'" max="'+todayKey()+'" style="flex:1;min-width:0">'
-      +(isToday?'':'<button class="mini" id="goToday">Volver a hoy</button>')+'</div>'
+    var hrG=new Date().getHours(); var saludo=hrG<12?"¡Buenos días! ☀️":(hrG<19?"¡Buenas tardes! 🌤️":"¡Buenas noches! 🌙");
+    var FRASES=["Pequeños pasos, gran cambio 🌱","Hoy votas por quien quieres ser 🗳️","Tu constancia construye tu calma 🧘","Un día a la vez, con cariño 💛","Lo que cuidas, crece 🌿","Hecho es mejor que perfecto ✨","Tu familia siente tu presencia 👨‍👩‍👦","Respira: estás avanzando 🌬️","Cada hábito alimenta a Koa 🐥","La disciplina es amor propio 🔥"];
+    var fr=FRASES[parseInt(dayK().replace(/-/g,""),10)%FRASES.length];
+    h+='<div class="card" style="padding:14px 16px">'
+      +(isToday?'<div style="font-family:Fraunces,serif;font-size:19px;font-weight:600">'+saludo+'</div><div class="small-note" style="margin-top:2px">'+fr+'</div>'
+               :'<div style="font-family:Fraunces,serif;font-size:17px;font-weight:600;color:var(--cuerpo)">✏️ Editando otro día</div><div class="small-note" style="margin-top:2px">Los cambios se guardan en esa fecha</div>')
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px">'
+      +'<button class="mini" id="dayPrev" style="font-size:17px;padding:4px 14px">‹</button>'
+      +'<input type="date" id="daySel" value="'+dayK()+'" max="'+todayKey()+'" style="flex:1;min-width:0;text-align:center">'
+      +'<button class="mini" id="dayNext" style="font-size:17px;padding:4px 14px"'+(isToday?' disabled':'')+'>›</button>'
+      +(isToday?'':'<button class="mini" id="goToday">Hoy</button>')+'</div>'
       +'<div class="lvlbar" style="margin-top:12px"><i id="dayProgBar" style="width:'+(doneH/7*100)+'%"></i></div>'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">'
       +'<span class="small-note" id="dayProgTxt">'+doneH+'/7 hábitos'+(isToday&&doneH<7?' · te falta: '+missingList(stH).slice(0,3).join(", "):'')+'</span>'
@@ -502,9 +531,11 @@
     // Medicinas
     var medsH="";
     if(meds.length===0) medsH='<div class="empty">Aún no agregas medicinas. Ve a 💊 Medicina.</div>';
-    else for(var k=0;k<meds.length;k++){ var md=meds[k]; var on=!!d.meds[md.id];
-      medsH+='<div class="med"><div class="check'+(on?' on':'')+'" data-med="'+md.id+'">'+(on?'✓':'')+'</div>'+
-        '<div class="info"><div class="n">'+esc(md.nombre)+'</div><div class="h">'+(md.hora?'🕐 '+md.hora:'')+(md.dosis?' · '+esc(md.dosis):'')+'</div></div></div>'; }
+    else { var anyDue=false;
+      for(var k=0;k<meds.length;k++){ var md=meds[k]; if(!medDueOn(md,dayK()))continue; anyDue=true; var on=!!d.meds[md.id];
+        medsH+='<div class="med"><div class="check'+(on?' on':'')+'" data-med="'+md.id+'">'+(on?'✓':'')+'</div>'+
+          '<div class="info"><div class="n">'+esc(md.nombre)+'</div><div class="h">'+(md.hora?'🕐 '+md.hora:'')+(md.dosis?' · '+esc(md.dosis):'')+'</div></div></div>'; }
+      if(!anyDue) medsH='<div class="empty">Hoy no corresponde ninguna medicina 💚</div>'; }
     h+='<div class="card"><div class="sec-label"><span class="dot" style="background:var(--salud)"></span>Medicinas de hoy</div>'+medsH+'</div>';
 
     h+='<div class="card"><label class="fld">Nota del día (opcional)</label>'+
@@ -581,7 +612,7 @@
   function mountPet(){
     var cont=document.getElementById("petCanvas"); if(!cont)return;
     var st=petState(getDay(todayKey()));
-    var scene=document.querySelector(".pet-scene"); if(scene){ var hr=new Date().getHours(); scene.classList.toggle("night", hr>=19||hr<6); }
+    var scene=document.querySelector(".pet-scene"); if(scene){ scene.classList.toggle("night", petDone(st)<=3); } /* día cuando estás bien, noche cuando faltan hábitos */
     cont.innerHTML='<div class="pet-loading">🐾</div>';
     if(petDone(st)===7){ setTimeout(function(){ spawnConfetti(); petSpeak("¡Día completo! 🎉"); },500); }
     tryGLB(cont, function(){ mountSVG(cont,st); });
@@ -1114,7 +1145,7 @@
   /* ===================== GRÁFICAS ===================== */
   var curPeriod="semanal", curMetric="pilares";
   var PERIODS=[["diario","Diario"],["semanal","Semanal"],["quincenal","Quincenal"],["mensual","Mensual"],["trimestre","Trimestre"],["semestre","Semestre"],["anual","Anual"]];
-  function metricsList(){ var m=[["pilares","Pilares (tiempo)"],["familia","Familia (detalle)"],["mente","Actividades mente"],["deporte","Deporte"],["sueno","Horas de sueño"],["animo","Ánimo promedio"],["peso","Peso"],["adher","Adherencia medicinas"]]; if(activities.length)m.push(["custom","Otros hábitos"]); return m; }
+  function metricsList(){ var m=[["pilares","Pilares (tiempo)"],["todos","Todas las líneas (min)"],["familia","Familia (detalle)"],["mente","Actividades mente"],["deporte","Deporte"],["sueno","Horas de sueño"],["animo","Ánimo promedio"],["peso","Peso"],["adher","Adherencia medicinas"]]; if(activities.length)m.push(["custom","Otros hábitos"]); return m; }
   function viewGraficas(){
     var per=""; for(var i=0;i<PERIODS.length;i++) per+='<button data-per="'+PERIODS[i][0]+'" class="'+(curPeriod===PERIODS[i][0]?'on':'')+'">'+PERIODS[i][1]+'</button>';
     var ML=metricsList(),opt=""; for(var j=0;j<ML.length;j++) opt+='<option value="'+ML[j][0]+'"'+(curMetric===ML[j][0]?' selected':'')+'>'+ML[j][1]+'</option>';
@@ -1148,6 +1179,14 @@
     function line(name,color,fn,avg){ return {name:name,type:"line",smooth:true,symbol:"circle",symbolSize:6,lineStyle:{width:3,color:color},itemStyle:{color:color},connectNulls:true,data:bs.map(function(b){ var v=avg?avgKeys(b.keys,fn):sumKeys(b.keys,fn); return v==null?null:Math.round(v*10)/10; })}; }
 
     if(curMetric==="pilares"){ opt=baseOpt(labels,grid,axis,true); opt.series=[bar("Mente","#6C7BD1",sumMente),bar("Cuerpo","#D9794E",function(d){return d.deporte||0;}),bar("Familia","#C4577A",sumFamilia)]; note="Minutos por pilar. Busca columnas parejas: ahí está el equilibrio."; }
+    else if(curMetric==="todos"){ opt=baseOpt(labels,grid,axis,true); opt.series=[
+      line("Lectura","#6C7BD1",function(d){return d.lectura||0;}),
+      line("Meditación","#7E8FE0",function(d){return d.meditacion||0;}),
+      line("Oración","#9AA8EC",function(d){return d.oracion||0;}),
+      line("Respiración","#5BB8C9",function(d){return d.respiracion||0;}),
+      line("Deporte","#D9794E",function(d){return d.deporte||0;}),
+      line("Familia","#C4577A",sumFamilia)
+    ]; note="Todas tus líneas en minutos, juntas. Toca la leyenda para ocultar/mostrar cada una."; }
     else if(curMetric==="familia"){ opt=baseOpt(labels,grid,axis,true); opt.series=[]; for(var i=0;i<members.length;i++){ (function(mb,idx){ opt.series.push(bar(mb.name,FAM_COLORS[idx%FAM_COLORS.length],function(d){return d.familia[mb.id]||0;})); })(members[i],i); } note="Tiempo con cada persona. ¿Alguien está quedando sin tiempo?"; }
     else if(curMetric==="mente"){ opt=baseOpt(labels,grid,axis,true); opt.series=[bar("Lectura","#6C7BD1",function(d){return d.lectura||0;}),bar("Meditación","#7E8FE0",function(d){return d.meditacion||0;}),bar("Oración","#9AA8EC",function(d){return d.oracion||0;}),bar("Respiración","#B7C2F4",function(d){return d.respiracion||0;})]; note="Detalle de tus prácticas de mente y espíritu."; }
     else if(curMetric==="deporte"){ opt=baseOpt(labels,grid,axis,false); opt.series=[bar("Deporte","#D9794E",function(d){return d.deporte||0;})]; note="Minutos de actividad física por periodo."; }
@@ -1172,16 +1211,32 @@
   }
 
   /* ===================== MEDICINAS ===================== */
+  var editMedId=null;
   function viewMedicinas(){
-    var h='<div class="card"><h2>Mis medicinas</h2><div class="sub">Configúralas una vez con su hora. Aparecerán cada día en ✍️ Hoy para marcar la toma, y te avisaré a su hora si activas recordatorios en ⚙️ Más.</div>';
+    var h='<div class="card"><h2>Mis medicinas</h2><div class="sub">Configura cada una con su horario y frecuencia. Aparecerán en ✍️ Hoy solo los días que correspondan.</div>';
     if(meds.length===0)h+='<div class="empty">No has agregado medicinas todavía.</div>';
-    else for(var i=0;i<meds.length;i++){ var m=meds[i]; h+='<div class="med"><div class="info"><div class="n">'+esc(m.nombre)+'</div><div class="h">'+(m.hora?'🕐 '+m.hora:'sin hora')+(m.dosis?' · '+esc(m.dosis):'')+'</div></div><button class="del" data-delmed="'+m.id+'">🗑️</button></div>'; }
-    h+='<div style="margin-top:14px"><label class="fld">Agregar medicina</label>'+
-      '<div class="addbar"><input class="t" type="text" id="mNombre" placeholder="Nombre"><input class="h" type="time" id="mHora"></div>'+
-      '<div class="addbar"><input type="text" id="mDosis" placeholder="Dosis (ej: 1 tableta, 500 mg)"></div>'+
-      '<button class="btn btn-ghost" id="addMed" style="margin-top:10px">+ Agregar medicina</button></div></div>';
-    if(meds.length){ var t=0,done=0; for(var x=0;x<7;x++){ var d=days[offsetKey(-x)]; if(!d)continue; for(var y=0;y<meds.length;y++){ t++; if(d.meds[meds[y].id])done++; } } var pct=t?Math.round(done/t*100):0;
-      h+='<div class="card"><div class="sec-label">Adherencia · últimos 7 días</div><div style="padding:6px 0"><div class="v" style="color:var(--salud);font-family:Fraunces,serif;font-size:34px;font-weight:600">'+pct+'%</div><div class="k" style="color:var(--muted);font-size:12px;font-weight:600">'+done+' de '+t+' tomas registradas</div></div></div>'; }
+    else for(var i=0;i<meds.length;i++){ var m=meds[i];
+      var freq=(parseInt(m.cada,10)||1)<=1?'diaria':'cada '+m.cada+' días';
+      var rango=(m.inicio?('desde '+m.inicio.slice(8)+'/'+m.inicio.slice(5,7)):'')+(m.fin?(' hasta '+m.fin.slice(8)+'/'+m.fin.slice(5,7)):'');
+      h+='<div class="med"><div class="info"><div class="n">'+esc(m.nombre)+'</div>'+
+        '<div class="h">'+(m.hora?'🕐 '+m.hora:'sin hora')+(m.dosis?' · '+esc(m.dosis):'')+'</div>'+
+        '<div class="h" style="opacity:.8">📅 '+freq+(rango?' · '+rango:'')+'</div></div>'+
+        '<button class="del" data-editmed="'+m.id+'" title="Editar">✏️</button>'+
+        '<button class="del" data-delmed="'+m.id+'">🗑️</button></div>'; }
+    var ed=null; if(editMedId){ for(var e=0;e<meds.length;e++) if(meds[e].id===editMedId){ ed=meds[e]; break; } }
+    h+='<div style="margin-top:14px"><label class="fld">'+(ed?'✏️ Editando: '+esc(ed.nombre):'Agregar medicina')+'</label>'+
+      '<div class="addbar"><input class="t" type="text" id="mNombre" placeholder="Nombre" value="'+(ed?esc(ed.nombre):'')+'"><input class="h" type="time" id="mHora" value="'+(ed?(ed.hora||''):'')+'"></div>'+
+      '<div class="addbar"><input type="text" id="mDosis" placeholder="Dosis (ej: 1 tableta, 500 mg)" value="'+(ed?esc(ed.dosis||''):'')+'"></div>'+
+      '<label class="fld" style="margin-top:10px">Inicio · Fin (opcional)</label>'+
+      '<div class="addbar"><input class="t" type="date" id="mInicio" value="'+(ed?(ed.inicio||''):todayKey())+'"><input class="t" type="date" id="mFin" value="'+(ed?(ed.fin||''):'')+'"></div>'+
+      '<label class="fld" style="margin-top:10px">¿Cada cuántos días? (1 = diaria)</label>'+
+      '<div class="addbar"><input class="t" type="number" id="mCada" min="1" value="'+(ed?(ed.cada||1):1)+'"></div>'+
+      '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" id="addMed" style="flex:1">'+(ed?'💾 Guardar cambios':'+ Agregar medicina')+'</button>'+
+      (ed?'<button class="mini" id="cancelEditMed">Cancelar</button>':'')+'</div></div></div>';
+    if(meds.length){ var t=0,done=0; for(var x=0;x<7;x++){ var k=offsetKey(-x), d=days[k];
+      for(var y=0;y<meds.length;y++){ if(!medDueOn(meds[y],k))continue; t++; if(d&&d.meds&&d.meds[meds[y].id])done++; } }
+      var pct=t?Math.round(done/t*100):0;
+      h+='<div class="card"><div class="sec-label">Adherencia · últimos 7 días</div><div style="padding:6px 0"><div class="v" style="color:var(--salud);font-family:Fraunces,serif;font-size:34px;font-weight:600">'+pct+'%</div><div class="k" style="color:var(--muted);font-size:12px;font-weight:600">'+done+' de '+t+' tomas que correspondían</div></div></div>'; }
     return h;
   }
 
@@ -1227,7 +1282,7 @@
         ? '<div class="item-line"><span class="e">🔒</span><span class="n">PIN activado</span><button class="btn btn-soft" id="rmPin" style="width:auto;padding:8px 14px;margin:0">Quitar PIN</button></div>'
         : '<div class="addbar"><input type="text" id="newPin" inputmode="numeric" pattern="\\d*" maxlength="4" placeholder="PIN de 4 dígitos"></div><button class="btn btn-ghost" id="setPin" style="margin-top:10px">Activar PIN</button>')+
       '<div class="small-note">El PIN es un candado básico para que alguien que tome tu teléfono no entre de una. No cifra los datos; para privacidad fuerte, suma el bloqueo de pantalla del propio iPhone.</div></div>';
-    return h;
+    return h+'<div class="small-note" style="text-align:center;opacity:.6;margin:8px 0 2px">Equilibrio v10 🌱</div>';
   }
   function metaInput(key,label){ return '<label class="fld">'+label+'</label><input type="number" data-meta="'+key+'" value="'+(settings[key]||0)+'" style="margin-bottom:12px">'; }
 
@@ -1236,7 +1291,10 @@
     var v=document.getElementById("view");
 
     if(tab==="hoy"){
-      bindEl("#daySel","change",function(el){ var k=el.value; if(!k)return; viewDayKey=(k===todayKey())?null:k; render(); });
+      bindEl("#daySel","change",function(el){ setViewDay(el.value); });
+      bindEl("#daySel","input",function(el){ setViewDay(el.value); });
+      bindEl("#dayPrev","click",function(){ setViewDay(shiftKey(dayK(),-1)); });
+      bindEl("#dayNext","click",function(){ setViewDay(shiftKey(dayK(),1)); });
       bindEl("#goToday","click",function(){ viewDayKey=null; render(); });
       bindEl("#readTimerBtn","click",openReadTimer);
       v.querySelectorAll(".stepper[data-field]").forEach(function(s){ var f=s.getAttribute("data-field"),st=+s.getAttribute("data-step");
@@ -1329,7 +1387,13 @@
     }
 
     if(tab==="medicinas"){
-      bindEl("#addMed","click",function(){ var n=val("#mNombre"); if(!n)return; meds.push({id:uid("m"),nombre:n,hora:val("#mHora"),dosis:val("#mDosis")}); persist("eq:meds",meds); scheduleReminders(); render(); });
+      bindEl("#addMed","click",function(){ var n=val("#mNombre"); if(!n)return;
+        var obj={id:editMedId||uid("m"),nombre:n,hora:val("#mHora"),dosis:val("#mDosis"),inicio:val("#mInicio")||todayKey(),fin:val("#mFin"),cada:Math.max(1,parseInt(val("#mCada"),10)||1)};
+        if(editMedId){ for(var i=0;i<meds.length;i++) if(meds[i].id===editMedId){ meds[i]=obj; break; } editMedId=null; }
+        else meds.push(obj);
+        persist("eq:meds",meds); scheduleReminders(); render(); });
+      bindEl("#cancelEditMed","click",function(){ editMedId=null; render(); });
+      v.querySelectorAll("[data-editmed]").forEach(function(b){ b.addEventListener("click",function(){ editMedId=b.getAttribute("data-editmed"); render(); }); });
       v.querySelectorAll("[data-delmed]").forEach(function(b){ b.addEventListener("click",function(){ var id=b.getAttribute("data-delmed"); meds=meds.filter(function(m){return m.id!==id;}); persist("eq:meds",meds); render(); }); });
     }
 
@@ -1415,11 +1479,13 @@
   function closeReadTimer(){
     if(rtState.timer)clearInterval(rtState.timer);
     document.getElementById("rtimer").classList.remove("show");
-    var mins=Math.round(rtState.sec/60);
-    if(mins>=1){
-      if(confirm("Leíste "+mins+" min. ¿Los agrego a tu lectura?")){ var d=getDay(dayK()); d.lectura=(d.lectura||0)+mins; persistDays(); checkCelebrate(); if(tab==="hoy")render(); showToast("📖 +"+mins+" min de lectura"); }
-      else showToast("Sin problema, agrégalos manualmente cuando quieras");
-    }
+    if(rtState.sec>=10){
+      var mins=Math.max(1,Math.round(rtState.sec/60));
+      document.getElementById("rtAskTxt").textContent="Leíste "+mins+" min. ¿Los agrego a tu lectura?";
+      var ask=document.getElementById("rtAsk"); ask.classList.add("show");
+      document.getElementById("rtYes").onclick=function(){ ask.classList.remove("show"); var d=getDay(dayK()); d.lectura=(d.lectura||0)+mins; persistDays(); checkCelebrate(); if(tab==="hoy")render(); showToast("📖 +"+mins+" min de lectura"); };
+      document.getElementById("rtNo").onclick=function(){ ask.classList.remove("show"); showToast("Listo, agrégalos manualmente cuando quieras"); };
+    } else showToast("Cronómetro cancelado (menos de 10 seg)");
   }
 
   /* ===================== ENSAYO MENTAL ===================== */
@@ -1503,7 +1569,7 @@
           for(var n=0;n<list.length;n++){ if(list[n].tag && list[n].tag.indexOf('eq-med-')===0) list[n].close(); }
           var now=Date.now();
           meds.forEach(function(m){ if(!m.hora)return; var p=m.hora.split(":");
-            for(var day=0;day<7;day++){ var t=new Date(); t.setDate(t.getDate()+day); t.setHours(+p[0],+p[1],0,0);
+            for(var day=0;day<7;day++){ if(!medDueOn(m,offsetKey(day)))continue; var t=new Date(); t.setDate(t.getDate()+day); t.setHours(+p[0],+p[1],0,0);
               if(t.getTime()>now){ try{ reg.showNotification("💊 Hora de tu medicina",{body:m.nombre+(m.dosis?" · "+m.dosis:""),tag:"eq-med-"+m.id+"-"+day,icon:"icon-192.png",badge:"icon-192.png",showTrigger:new window.TimestampTrigger(t.getTime())}); }catch(e){} }
             } });
         }).catch(function(){});
